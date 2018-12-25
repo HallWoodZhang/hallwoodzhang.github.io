@@ -79,6 +79,93 @@
         <header class="article-info clearfix">
   <h1 itemprop="name">
     
+      <a href="/2018/12/25/tiny_socket/" title="用C++实现一个非常简单的socket即时通信机制" itemprop="url">用C++实现一个非常简单的socket即时通信机制</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="Hall" target="_blank" itemprop="author">Hall</a>
+		
+  </p><p class="article-time">
+    <time datetime="2018-12-25T01:10:20.000Z" itemprop="datePublished"> 发表于 2018-12-25</time>
+    
+  </p>
+</header>
+    <div class="article-content">
+        
+        <h1 id="先大致分析一下"><a href="#先大致分析一下" class="headerlink" title="先大致分析一下"></a>先大致分析一下</h1><h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><p>在这个简单的demo中，我们需要两个主要的部分</p>
+<ol>
+<li>服务器：能够接受新的客户端连接，并将每个客户端发过来的消息发给所有其他的客户端</li>
+<li>客户端：能够连接服务器，并且向服务器发送信息</li>
+</ol>
+<p>这个是最简单的群聊功能, 以后有空的话考虑加入两个客户端之间的私聊功能, 第一版我不会加入太多的东西,包括但不限于线程池, 多线程编程, 超时重传, 确认收包( 当然还包括GUI )等特性在初版中我都不会涉及, 这一次的理解重点在于Linux epoll和C/S架构的理解</p>
+<h2 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h2><p>从之前的需求的大致整理,我们可以归纳出以下几条要点</p>
+<h4 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h4><ol>
+<li>连接服务器</li>
+<li>支持用户输入信息,发送信息给服务器</li>
+<li>接受并且显示服务器的信息</li>
+<li>退出连接</li>
+</ol>
+<p>针对上述需求, 客户端实现需要两个进程, 分别支持下面的功能</p>
+<p>对于子进程:</p>
+<ol>
+<li>等待用户输入聊天信息</li>
+<li>将信息写入管道( pipe ) 中读取, 并且发送给服务器</li>
+</ol>
+<p>对于父进程:</p>
+<ol>
+<li>使用epoll机制接受接受服务器端发过来的信息, 并显示给用户, 使用户看到其他用户的聊天信息</li>
+<li>将子进程写道pipe内的信息读取出来并且发送给服务器端</li>
+</ol>
+<h4 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h4><ol>
+<li>支持多个客户端接入，实现聊天室基本功能</li>
+<li>启动服务建立监听端口等待客户端连接</li>
+<li>使用epoll机制实现并发，增加效率</li>
+<li>客户端连接时发送欢迎消息并存储连接记录</li>
+<li>客户端发送消息时广播给其他所有客户端</li>
+<li>客户端请求退出时对连接信息进行清理</li>
+</ol>
+<h2 id="模型"><a href="#模型" class="headerlink" title="模型"></a>模型</h2><p>模型采用C/S模型</p>
+
+        
+        
+        <p class="article-more-link">
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/web/">web</a>
+  </div>
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        <header class="article-info clearfix">
+  <h1 itemprop="name">
+    
       <a href="/2018/12/01/stl-analysis1-md/" title="STL源码学习 1" itemprop="url">STL源码学习 1</a>
   </h1>
   <p class="article-author">By
@@ -490,64 +577,6 @@
 
 
 
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2018/11/25/hello-world/" title="Hello World" itemprop="url">Hello World</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="/about" title="Hall" target="_blank" itemprop="author">Hall</a>
-		
-  </p><p class="article-time">
-    <time datetime="2018-11-24T18:35:40.577Z" itemprop="datePublished"> 发表于 2018-11-25</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
 
 </div>
       <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
@@ -578,6 +607,10 @@
 		
 			
 				<li><a href="/tags/redis/" title="redis">redis<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/web/" title="web">web<sup>1</sup></a></li>
 			
 		
 		</ul>
