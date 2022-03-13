@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="NLP情感分析的一个简单demo by hallwoodzhang@gmail.com  在实验开始前，先要保证电脑中具有   123456789101112pythonnumpyjiebagensimmatplotlibscikit-learntensorflowkeras# 没有这个你也很不舒服对吧，这个必须有jupyter-notebook  由于我的os是Arch Linux这些packa">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NLPDemo">
+<meta property="og:url" content="http://yoursite.com/2019/04/23/NLPDemo/index.html">
+<meta property="og:site_name" content="Hall">
+<meta property="og:description" content="NLP情感分析的一个简单demo by hallwoodzhang@gmail.com  在实验开始前，先要保证电脑中具有   123456789101112pythonnumpyjiebagensimmatplotlibscikit-learntensorflowkeras# 没有这个你也很不舒服对吧，这个必须有jupyter-notebook  由于我的os是Arch Linux这些packa">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/2019/04/23/NLPDemo/NLPDemo_files/demo_22_0.png">
+<meta property="article:published_time" content="2019-04-23T09:58:38.000Z">
+<meta property="article:modified_time" content="2022-03-13T10:10:45.294Z">
+<meta property="article:author" content="Hall">
+<meta property="article:tag" content="Deep Learing">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2019/04/23/NLPDemo/NLPDemo_files/demo_22_0.png">
+
+<link rel="canonical" href="http://yoursite.com/2019/04/23/NLPDemo/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>NLPDemo | Hall</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hall</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">我的网上笔记本</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/23/NLPDemo/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Hall">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hall">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          NLPDemo
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-04-23 17:58:38" itemprop="dateCreated datePublished" datetime="2019-04-23T17:58:38+08:00">2019-04-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-13 18:10:45" itemprop="dateModified" datetime="2022-03-13T18:10:45+08:00">2022-03-13</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="NLP情感分析的一个简单demo"><a href="#NLP情感分析的一个简单demo" class="headerlink" title="NLP情感分析的一个简单demo"></a>NLP情感分析的一个简单demo</h1><ul>
+<li><p>by <a href="mailto:hallwoodzhang@gmail.com" target="_blank" rel="noopener">hallwoodzhang@gmail.com</a></p>
+</li>
+<li><p>在实验开始前，先要保证电脑中具有</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">python</span><br><span class="line">numpy</span><br><span class="line">jieba</span><br><span class="line">gensim</span><br><span class="line">matplotlib</span><br><span class="line">scikit-learn</span><br><span class="line"></span><br><span class="line">tensorflow</span><br><span class="line">keras</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 没有这个你也很不舒服对吧，这个必须有</span></span><br><span class="line">jupyter-notebook</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>由于我的os是Arch Linux这些package的安装非常方便，不是pacman就是makepkg，如果是其他Linux发行版或者是mac更有甚者使用windows的同学，安装过程可能会复杂一些</p>
+</li>
+<li><p>这个实验的规模很小，所以并没有使用GPU来进行cuda加速，直接使用老旧的i5-3320M作为运算承担者，也不是很烫手</p>
+</li>
+<li><p>在实验之前，需要先下载知乎的词料库，这个词料库是由北京师范大学和中国人民大学的 DBIIR 实验室的研究者开源和免费提供的”chinese-word-vectors”，非常感谢这些老师和同学的努力，这里给出他们的github repo地址（自觉star）还有需要的百度云地址：</p>
+</li>
+</ul>
+<p><a href="https://github.com/Embedding/Chinese-Word-Vectors" target="_blank" rel="noopener">https://github.com/Embedding/Chinese-Word-Vectors</a></p>
+<p><a href="https://pan.baidu.com/s/1OQ6fQLCgqT43WTwh5fh_lg" target="_blank" rel="noopener">https://pan.baidu.com/s/1OQ6fQLCgqT43WTwh5fh_lg</a></p>
+<p>如果嫌下载速度慢，作为一个程序员，我建议你使用baidu_pcs_go，具体怎么使用自行在github查找，使用时也请自觉star</p>
+<ul>
+<li><p>如果你不知道什么是word2vec，也没有关系，你只需要知道他是一种词语转化为一维向量的一种压缩表示，并且意义相近或者出现相近频率高的两个词所转化的一维向量之中他们的cos值非常接近 1,距离非常近，就行了，具体的预处理细节（预处理过程也是一次深度学习过程）与本实验无关</p>
+</li>
+<li><p>我通过一个github用户aespresso，和他发布的youtube教程找到了这个repo，不仅如此，我这一整个实验也是基于这位先生的教程，非常感谢他无私的奉献</p>
+</li>
+</ul>
+<p><strong>这个是他的github repo:</strong><br><a href="https://github.com/aespresso/chinese_sentiment" target="_blank" rel="noopener">https://github.com/aespresso/chinese_sentiment</a></p>
+<p><strong>这个是我在youtube找到的教程的地址</strong><br><a href="https://www.youtube.com/watch?v=-mcrmLmNOXA" target="_blank" rel="noopener">https://www.youtube.com/watch?v=-mcrmLmNOXA</a></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 首先，我们需要先导入特定的需要的模块，并且确定utf-8编码</span></span><br><span class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> unicode_literals</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> jieba</span><br><span class="line"><span class="keyword">from</span> gensim.models <span class="keyword">import</span> KeyedVectors</span><br><span class="line"><span class="keyword">import</span> warnings</span><br><span class="line"></span><br><span class="line">warnings.filterwarnings(<span class="string">"ignore"</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 然后, 我们需要使用gensim中的模块导入系统导入知乎的向量库，这个向量库是经过</span></span><br><span class="line"><span class="comment"># 别的dalao训练过的词向量模型，这是一个很帅气的预处理工作，它生成了一个名字-&gt;长度为300的向量的字典</span></span><br><span class="line"></span><br><span class="line">cn_model = KeyedVectors.load_word2vec_format(<span class="string">"./sgns.zhihu.bigram"</span>, binary=<span class="keyword">False</span>)</span><br><span class="line"></span><br><span class="line">embedding_dim = cn_model[<span class="string">"东北大学"</span>].shape[<span class="number">0</span>]</span><br><span class="line">print(<span class="string">"词向量的长度是：&#123;&#125;"</span>.format(embedding_dim))</span><br><span class="line">print(cn_model[<span class="string">'东北大学'</span>])</span><br></pre></td></tr></table></figure>
+<pre><code>词向量的长度是：300
+[-0.173169  0.167039 -0.280759 -0.014771 -0.383082 -0.449514  0.004122
+  0.181255 -0.0816    0.166133 -0.422213  0.61386   0.200546 -0.047912
+  0.521156 -0.452226  0.205978  0.310417  0.271675  0.188779  0.056854
+  0.248341 -0.250261  0.016247 -0.278753 -0.346694 -0.03471   0.03249
+  0.215906  0.094957 -0.052379  0.135054 -0.565997  0.116935 -0.033103
+  0.063923  0.063995 -0.047387 -0.147508  0.04383  -0.710059 -0.238688
+ -0.420966  0.104801  0.036028  0.015015 -0.076793  0.109947 -0.117651
+  0.240857  0.046658 -0.506142  0.193275 -0.262593 -0.223561  0.084296
+ -0.40914   0.353332  0.036367  0.244455  0.190103  0.45901  -0.095526
+ -0.031275  0.179822 -0.009634 -0.119463  0.182669  0.251691  0.163992
+ -0.162786 -0.067089 -0.367855 -0.453598 -0.114575 -0.090093  0.22609
+  0.084055 -0.008024  0.116842  0.245771 -0.079714 -0.21936   0.158594
+ -0.147824 -0.007306  0.038464  0.076449  0.010872  0.339708 -0.387843
+  0.070963 -0.162495 -0.055928 -0.014498 -0.3011   -0.006571 -0.170685
+  0.249473  0.395145  0.490381  0.439393  0.070372  0.204143 -0.357806
+  0.346742  0.114885  0.051335  0.227703 -0.269376 -0.230159  0.628753
+  0.454348  0.303936 -0.309634  0.044038 -0.072019  0.121463 -0.387852
+  0.11073   0.319537  0.319746  0.129916 -0.45686  -0.065263 -0.327417
+ -0.239647 -0.129028  0.28914  -0.228613  0.466321  0.210633  0.37147
+  0.12168   0.340034 -0.333509  0.086691  0.077145 -0.094515 -0.043243
+ -0.310047  0.200959 -0.092351 -0.342879 -0.478685 -0.066384  0.163397
+  0.857368 -0.080743  0.169016  0.09662  -0.123794 -0.117578 -0.26009
+  0.795876  0.789666  0.069576 -0.133995 -0.042939  0.082372  0.001277
+  0.108221 -0.627131 -0.201711  0.283772 -0.112421 -0.411831  0.246149
+  0.450343 -0.018889 -0.217646  0.085195 -0.093665  0.121886  0.041374
+ -0.154509 -0.475513  0.414564 -0.632025 -0.001257 -0.143076  0.076735
+  0.232488  0.28378   0.060433  0.059984 -0.113402  0.10065  -0.130145
+  0.450837 -0.52761   0.039118 -0.237067 -0.19011  -0.013432 -0.288856
+ -0.044987 -0.10847  -0.046629  0.035354  0.455324  0.067548  0.214632
+ -0.196388  0.765769  0.199199 -0.030234 -0.058608  0.036483 -0.082312
+ -0.228086 -0.275695 -0.281059 -0.364453  0.045814  0.43929   0.142706
+ -0.021881 -0.05454   0.430346  0.052213  0.437351  0.170989 -0.175498
+  0.439948 -0.438312  0.002475  0.370412  0.070516 -0.206736  0.016968
+ -0.11588  -0.117777 -0.148206 -0.059988  0.030804 -0.04045   0.324203
+  0.234363  0.128853 -0.202953  0.0302    0.244632  0.161924  0.037215
+  0.259181 -0.149307 -0.633232  0.096391  0.274292  0.36863  -0.263364
+ -0.03885   0.320316  0.166729 -0.079096  0.226739 -0.272492  0.15599
+  0.218765  0.136066 -0.428375 -0.19812   0.198432 -0.594367 -0.305591
+  0.047796 -0.323848 -0.202678  0.293873  0.328747 -0.647988  0.068186
+  0.26757   0.435469  0.22514  -0.006098  0.110309  0.494696 -0.267628
+  0.150945  0.015826  0.114192  0.039815  0.067472  0.280086 -0.190843
+ -0.274264  0.206202 -0.30322  -0.264427 -0.298466 -0.561606 -0.21909
+ -0.05875  -0.137941  0.081865  0.271779  0.574957 -0.519857]
+</code></pre><p>很显然，这一步我们直接跳过了一个步骤，那就是将中文词汇转化为vector的步骤，完成这个步骤的dalao帮助我们省了很多事情，所以我们有更多的精力用来构造双向LSTM模型</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 我现在尝试了解KeyedVectors.load_word2vec_format("./sgns.zhihu.bigram", binary=False)</span></span><br><span class="line"><span class="comment"># 的返回值的（也就是词向量字典封装类）结构，在这里我们给它赋值为cn_model，如上所示</span></span><br><span class="line"></span><br><span class="line">print(dir(cn_model))</span><br><span class="line">print(type(cn_model))</span><br></pre></td></tr></table></figure>
+<pre><code>[&apos;__class__&apos;, &apos;__contains__&apos;, &apos;__delattr__&apos;, &apos;__dict__&apos;, &apos;__dir__&apos;, &apos;__doc__&apos;, &apos;__eq__&apos;, &apos;__format__&apos;, &apos;__ge__&apos;, &apos;__getattribute__&apos;, &apos;__getitem__&apos;, &apos;__gt__&apos;, &apos;__hash__&apos;, &apos;__init__&apos;, &apos;__init_subclass__&apos;, &apos;__le__&apos;, &apos;__lt__&apos;, &apos;__module__&apos;, &apos;__ne__&apos;, &apos;__new__&apos;, &apos;__reduce__&apos;, &apos;__reduce_ex__&apos;, &apos;__repr__&apos;, &apos;__setattr__&apos;, &apos;__setitem__&apos;, &apos;__sizeof__&apos;, &apos;__str__&apos;, &apos;__subclasshook__&apos;, &apos;__weakref__&apos;, &apos;_adapt_by_suffix&apos;, &apos;_load_specials&apos;, &apos;_log_evaluate_word_analogies&apos;, &apos;_save_specials&apos;, &apos;_smart_save&apos;, &apos;accuracy&apos;, &apos;add&apos;, &apos;closer_than&apos;, &apos;cosine_similarities&apos;, &apos;distance&apos;, &apos;distances&apos;, &apos;doesnt_match&apos;, &apos;evaluate_word_analogies&apos;, &apos;evaluate_word_pairs&apos;, &apos;get_keras_embedding&apos;, &apos;get_vector&apos;, &apos;index2entity&apos;, &apos;index2word&apos;, &apos;init_sims&apos;, &apos;load&apos;, &apos;load_word2vec_format&apos;, &apos;log_accuracy&apos;, &apos;log_evaluate_word_pairs&apos;, &apos;most_similar&apos;, &apos;most_similar_cosmul&apos;, &apos;most_similar_to_given&apos;, &apos;n_similarity&apos;, &apos;rank&apos;, &apos;relative_cosine_similarity&apos;, &apos;save&apos;, &apos;save_word2vec_format&apos;, &apos;similar_by_vector&apos;, &apos;similar_by_word&apos;, &apos;similarity&apos;, &apos;similarity_matrix&apos;, &apos;syn0&apos;, &apos;syn0norm&apos;, &apos;vector_size&apos;, &apos;vectors&apos;, &apos;vectors_norm&apos;, &apos;vocab&apos;, &apos;wmdistance&apos;, &apos;word_vec&apos;, &apos;words_closer_than&apos;, &apos;wv&apos;]
+&lt;class &apos;gensim.models.keyedvectors.Word2VecKeyedVectors&apos;&gt;
+</code></pre><p>在这里，我们使用了dir函数，它炸出了一大堆东西，但是我菜啊，我看不懂，怎么办</p>
+<p>只能根据这些输出的函数名字去分别了解相对应的功能，使用google，事半功倍</p>
+<p><strong>我们可以很容易地找到，gensim的doc网址</strong><br><a href="https://radimrehurek.com/gensim/apiref.html" target="_blank" rel="noopener">https://radimrehurek.com/gensim/apiref.html</a></p>
+<p>这样我们就可以知道KeyedVectors.load_word2vec_format这个载入函数的返回值的类型了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;class 'gensim.models.keyedvectors.Word2VecKeyedVectors'&gt;</span><br></pre></td></tr></table></figure>
+<p>哇，这个是什么类？我们可以用这个类做什么？这个直接在官方的文档网站就可以找到</p>
+<ul>
+<li>Mapping between words and vectors for the Word2Vec model. Used to perform operations on the vectors such as vector lookup, distance, similarity etc.</li>
+</ul>
+<p>这样，这个类的对象是一个字典类似对象，但是给出了很多方便的接口，比如计算两个词之间的相似度，距离等等非常方便的接口<br>我们接下来马上试试</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 找出最相近的词，我们比较贪心，要找出前100个相似的，这里用的向量余弦相似度，属于高中数学内容</span></span><br><span class="line">cn_model.most_similar(positive=[<span class="string">'大学'</span>], topn=<span class="number">100</span>)</span><br></pre></td></tr></table></figure>
+<pre><code>[(&apos;高中&apos;, 0.7247821688652039),
+ (&apos;本科&apos;, 0.6768536567687988),
+ (&apos;研究生&apos;, 0.6244412660598755),
+ (&apos;中学&apos;, 0.6088206768035889),
+ (&apos;大学本科&apos;, 0.595908522605896),
+ (&apos;初中&apos;, 0.5883588790893555),
+ (&apos;读研&apos;, 0.5778335928916931),
+ (&apos;职高&apos;, 0.5767994523048401),
+ (&apos;大学毕业&apos;, 0.5767452120780945),
+ (&apos;师范大学&apos;, 0.5708829164505005),
+ (&apos;职中&apos;, 0.5695523023605347),
+ (&apos;医科&apos;, 0.5680999159812927),
+ (&apos;医学院&apos;, 0.5679919123649597),
+ (&apos;小学&apos;, 0.5646480321884155),
+ (&apos;中专&apos;, 0.5628771185874939),
+ (&apos;预科&apos;, 0.5617093443870544),
+ (&apos;高中后&apos;, 0.561117947101593),
+ (&apos;专科学校&apos;, 0.5603978037834167),
+ (&apos;医学院校&apos;, 0.5599128603935242),
+ (&apos;高中上&apos;, 0.5595210194587708),
+ (&apos;高中和&apos;, 0.5583246350288391),
+ (&apos;高中没&apos;, 0.5544076561927795),
+ (&apos;高中都&apos;, 0.5528644919395447),
+ (&apos;军校&apos;, 0.5500032305717468),
+ (&apos;技校&apos;, 0.548747718334198),
+ (&apos;庆应&apos;, 0.5458650588989258),
+ (&apos;念书&apos;, 0.5458193421363831),
+ (&apos;高校&apos;, 0.5448956489562988),
+ (&apos;那所&apos;, 0.5438604950904846),
+ (&apos;野鸡大学&apos;, 0.542473554611206),
+ (&apos;法学院&apos;, 0.5421650409698486),
+ (&apos;职校&apos;, 0.5418159365653992),
+ (&apos;硕士&apos;, 0.5406658053398132),
+ (&apos;高中再&apos;, 0.5402267575263977),
+ (&apos;私立高中&apos;, 0.5399061441421509),
+ (&apos;高中我&apos;, 0.5386292934417725),
+ (&apos;国际部&apos;, 0.5384584665298462),
+ (&apos;大专&apos;, 0.5383963584899902),
+ (&apos;普高&apos;, 0.5363925695419312),
+ (&apos;高中里&apos;, 0.5352319478988647),
+ (&apos;重点高中&apos;, 0.5320777893066406),
+ (&apos;武汉一&apos;, 0.5320106148719788),
+ (&apos;普通本科&apos;, 0.5314226150512695),
+ (&apos;私立中学&apos;, 0.5313701629638672),
+ (&apos;名牌大学&apos;, 0.5307841897010803),
+ (&apos;卫校&apos;, 0.530119001865387),
+ (&apos;高中到&apos;, 0.5297942161560059),
+ (&apos;985&apos;, 0.5292823910713196),
+ (&apos;师范院校&apos;, 0.5284144282341003),
+ (&apos;艺校&apos;, 0.5281397104263306),
+ (&apos;师范类&apos;, 0.5281273126602173),
+ (&apos;普通高中&apos;, 0.5267952084541321),
+ (&apos;师范&apos;, 0.5257189869880676),
+ (&apos;警校&apos;, 0.5256354212760925),
+ (&apos;师范学校&apos;, 0.5255476832389832),
+ (&apos;学校&apos;, 0.5252041220664978),
+ (&apos;高三没&apos;, 0.5238454937934875),
+ (&apos;大连理工&apos;, 0.5235210061073303),
+ (&apos;院校&apos;, 0.5231703519821167),
+ (&apos;艺术院校&apos;, 0.5229425430297852),
+ (&apos;军医大&apos;, 0.5211274027824402),
+ (&apos;外国语大学&apos;, 0.5209094285964966),
+ (&apos;英语系&apos;, 0.5208790302276611),
+ (&apos;社区大学&apos;, 0.5202288627624512),
+ (&apos;高中又&apos;, 0.5201476812362671),
+ (&apos;五年制&apos;, 0.5199419856071472),
+ (&apos;省级重点&apos;, 0.5197730660438538),
+ (&apos;军医大学&apos;, 0.519767165184021),
+ (&apos;金融系&apos;, 0.5196066498756409),
+ (&apos;师范学院&apos;, 0.5194557309150696),
+ (&apos;职业学院&apos;, 0.518003523349762),
+ (&apos;公立大学&apos;, 0.5172786712646484),
+ (&apos;普通高校&apos;, 0.5172494053840637),
+ (&apos;外国语学院&apos;, 0.5171521902084351),
+ (&apos;财经学校&apos;, 0.5170426964759827),
+ (&apos;高中考&apos;, 0.5167708396911621),
+ (&apos;高中在&apos;, 0.5163607001304626),
+ (&apos;211&apos;, 0.5148729085922241),
+ (&apos;名校&apos;, 0.5147680044174194),
+ (&apos;北大医学部&apos;, 0.5146102905273438),
+ (&apos;师专&apos;, 0.5141969919204712),
+ (&apos;寄宿制&apos;, 0.5140889883041382),
+ (&apos;武汉某&apos;, 0.5136144757270813),
+ (&apos;某大学&apos;, 0.5126028060913086),
+ (&apos;川大&apos;, 0.5104366540908813),
+ (&apos;日语系&apos;, 0.5104085206985474),
+ (&apos;毛中&apos;, 0.510360836982727),
+ (&apos;初高中&apos;, 0.5103123784065247),
+ (&apos;成人高考&apos;, 0.510170578956604),
+ (&apos;高三后&apos;, 0.5100051760673523),
+ (&apos;九八五&apos;, 0.5088520646095276),
+ (&apos;法律系&apos;, 0.5087538957595825),
+ (&apos;美国大学&apos;, 0.5084203481674194),
+ (&apos;工科大学&apos;, 0.5082870721817017),
+ (&apos;数学系&apos;, 0.5082342624664307),
+ (&apos;艺术学校&apos;, 0.5080037117004395),
+ (&apos;考上&apos;, 0.50799161195755),
+ (&apos;继续教育&apos;, 0.5068403482437134),
+ (&apos;高中当&apos;, 0.5067394971847534),
+ (&apos;南外&apos;, 0.5065196752548218)]
+</code></pre><p>可以很容易的看出，后面的相似度是用一个很长的浮点数来表示的，这表示越接近1,两个词之间越相似，可以说这个预训练的词向量集合还是比较靠谱的，基本上不会出现相似度非常高，但是风马牛不相及的词</p>
+<p>我们可以使用自己的词语来测试一下，这个model中能不能挑出一组词中的“异类”</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test_words = <span class="string">"老师 会计 程序员 律师 医生 老人"</span></span><br><span class="line">diff_word = cn_model.doesnt_match(test_words.split())</span><br><span class="line">print(<span class="string">'在 '</span> + test_words + <span class="string">' 中:\n不是同一类别的词为: %s'</span> % diff_word)</span><br></pre></td></tr></table></figure>
+<pre><code>在 老师 会计 程序员 律师 医生 老人 中:
+不是同一类别的词为: 老人
+</code></pre><p>我们可以很容易的看到，这个模型的很容易的从一堆职业表示词中挑选出了一个表示某一个年龄的人群的词</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cn_model.most_similar(positive=[<span class="string">'女人'</span>,<span class="string">'出轨'</span>], negative=[<span class="string">'男人'</span>], topn=<span class="number">10</span>)</span><br></pre></td></tr></table></figure>
+<pre><code>[(&apos;劈腿&apos;, 0.5849197506904602),
+ (&apos;婚外情&apos;, 0.5557920336723328),
+ (&apos;偷情&apos;, 0.5555664896965027),
+ (&apos;外遇&apos;, 0.545864462852478),
+ (&apos;再婚&apos;, 0.5422407388687134),
+ (&apos;未婚先孕&apos;, 0.5357396006584167),
+ (&apos;隐婚&apos;, 0.5257365107536316),
+ (&apos;离婚&apos;, 0.5245394110679626),
+ (&apos;马蓉&apos;, 0.5239366292953491),
+ (&apos;通奸&apos;, 0.522205650806427)]
+</code></pre><p>在这里，我们要从词料库中挑选出最接近“女人”，“出轨”这两个词的词，但是这些词我们希望和“男人”这个词关系尽量远，就这样筛选出了上述十个词</p>
+<p>居然出现了“马蓉”小姐，这个也太真实了吧，我哭了<br>那要是我们换一种玩法，使用“男人”，“出轨”，作为正向的引导，反之要求和“女人”这个词距离远一点结果会怎么样呢？</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cn_model.most_similar(positive=[<span class="string">'男人'</span>,<span class="string">'出轨'</span>], negative=[<span class="string">'女人'</span>], topn=<span class="number">10</span>)</span><br></pre></td></tr></table></figure>
+<pre><code>[(&apos;劈腿&apos;, 0.6062113046646118),
+ (&apos;外遇&apos;, 0.558462381362915),
+ (&apos;婚外情&apos;, 0.5538169741630554),
+ (&apos;马蓉&apos;, 0.5418684482574463),
+ (&apos;隐婚&apos;, 0.5396678447723389),
+ (&apos;嫖娼&apos;, 0.5364097952842712),
+ (&apos;移情别恋&apos;, 0.5359160900115967),
+ (&apos;偷情&apos;, 0.5289183259010315),
+ (&apos;骗婚&apos;, 0.5087193846702576),
+ (&apos;好男人&apos;, 0.5070855617523193)]
+</code></pre><p>居然出现了“好男人”这个词，笑死我了（马某人又是你，这说明在知乎，马某人和出轨这种话题共同出现的频率非常高</p>
+<p>值得注意的是，这里的所有列出来的值都很接近百分之50,说明预处理词向量的model并不是很确定它的决定是否准确，所以我们观察到这两次的“出轨”相关的输出相差不是很大，事实上，就算是人类自己来做这种分类，也很难说“劈腿”到底是更像“女人”，还是更像“男人”，但是“未婚先孕”一定是更像“女人”的，这点也在上面的两次输出中体现出来了</p>
+<p>这个确实很好玩，有兴趣的可以想想有什么新的玩法</p>
+<p><strong>通过现有的经过预处理的model来猜测一些评价的倾向</strong></p>
+<p>因为我比较菜，所以这里做的工作仅限于区分正面评价和负面评价，并且给定一个概率值来表示生成的model对于这个结果的确信程度</p>
+<p>在这里，我找到了网上的一些资料作为训练集，用来训练我们自己的微型人工智障</p>
+<p>并且用生成的model去猜测一些评价的积极性，在这里我使用LSTM模型，并且使用双向的模型</p>
+<p>那么问题来了，我去那里找评价？爬虫爬？这个工程量有点大，我时间比较有限，所以这里使用哈工大谭松波老师的数据集</p>
+<p>这个数据集很难找，<strong>所以我通过一个github用户aespresso，和他发布的youtube教程找到了这个repo，不仅如此，我这一整个实验也是基于这位先生的教程，非常感谢他无私的奉献</strong></p>
+<p><strong>这个是他的github repo:</strong><br><a href="https://github.com/aespresso/chinese_sentiment" target="_blank" rel="noopener">https://github.com/aespresso/chinese_sentiment</a></p>
+<p>直接给star！有什么好说的？</p>
+<p><strong>这个是我在youtube找到的教程的地址</strong><br><a href="https://www.youtube.com/watch?v=-mcrmLmNOXA" target="_blank" rel="noopener">https://www.youtube.com/watch?v=-mcrmLmNOXA</a></p>
+<p>我在这个repo中找到了现成的已经经过分类的好评和差评的集合，现在我们把它导入进来，并且作为我们的训练集还有测试集，这时候我们距离我们的第一个人工智障又进了一步</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 现在，我们需要导入评价集</span></span><br><span class="line"><span class="comment"># 这个path由你自己定义，我在这里直接clone了aespresso的repo所以path是</span></span><br><span class="line"><span class="comment"># ./chinese_sentiment/pos和./chinese_sentiment/neg</span></span><br><span class="line"><span class="comment"># 记得unzip 语料.zip</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line">positive_dir = os.listdir(<span class="string">"./chinese_sentiment/pos"</span>)</span><br><span class="line">negative_dir = os.listdir(<span class="string">"./chinese_sentiment/neg"</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">print(type(positive_dir))</span><br><span class="line">print(len(positive_dir))</span><br><span class="line"><span class="comment"># print(positive_dir)</span></span><br><span class="line">print(<span class="string">'样本总共: '</span>+ str(len(negative_dir) + len(positive_dir)))</span><br></pre></td></tr></table></figure>
+<pre><code>&lt;class &apos;list&apos;&gt;
+2000
+样本总共: 4000
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 接下来我们会一步步把所有的评论都放在一个list内，并且打乱他们，尝试分出</span></span><br><span class="line"><span class="comment"># 用来训练的和测试的部分集合</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> print_function </span><br><span class="line"></span><br><span class="line">origin_train_txts = []</span><br><span class="line"></span><br><span class="line"><span class="comment"># 这么频繁的文件IO操作可能会有点慢，而且有点卡</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(len(positive_dir)):</span><br><span class="line">    <span class="keyword">with</span> open(<span class="string">"./chinese_sentiment/pos/"</span> + positive_dir[i], <span class="string">"r"</span>, errors=<span class="string">"ignore"</span>, encoding=<span class="string">"gbk"</span>) <span class="keyword">as</span> f:</span><br><span class="line">        text = f.read().strip()</span><br><span class="line">        origin_train_txts.append(text)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(len(negative_dir)):</span><br><span class="line">    <span class="keyword">with</span> open(<span class="string">"./chinese_sentiment/neg/"</span> + negative_dir[i], <span class="string">"r"</span>, errors=<span class="string">"ignore"</span>, encoding=<span class="string">"gbk"</span>) <span class="keyword">as</span> f:</span><br><span class="line">        text = f.read().strip()</span><br><span class="line">        origin_train_txts.append(text)</span><br><span class="line"></span><br><span class="line">print(type(origin_train_txts))</span><br><span class="line">print(len(origin_train_txts))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 怎么回事，居然有乱码。。。。真是奇葩</span></span><br><span class="line"><span class="comment"># 这里有点坑爹，原来的文件是gb 2312编码</span></span><br><span class="line"><span class="comment"># 都9102年了，90后都要奔三了，utf-8居然还没有普及，惊了</span></span><br><span class="line">print(origin_train_txts[<span class="number">0</span>])</span><br></pre></td></tr></table></figure>
+<pre><code>&lt;class &apos;list&apos;&gt;
+4000
+单人间的价格物超所值.早餐不错.服务也好,很人性化.呵呵,第一次碰到卫生间马桶里撒花瓣的宾馆.不过酒店的洗浴中心,美容美发都在装修中不能使用.预定时没有提到.
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用核武器tensorflow和傻瓜式接口keras</span></span><br><span class="line"><span class="keyword">from</span> tensorflow.python.keras.models <span class="keyword">import</span> Sequential</span><br><span class="line"><span class="keyword">from</span> tensorflow.python.keras.layers <span class="keyword">import</span> Dense, GRU, Embedding, LSTM, Bidirectional</span><br><span class="line"><span class="keyword">from</span> tensorflow.python.keras.preprocessing.text <span class="keyword">import</span> Tokenizer</span><br><span class="line"><span class="keyword">from</span> tensorflow.python.keras.preprocessing.sequence <span class="keyword">import</span> pad_sequences</span><br><span class="line"><span class="keyword">from</span> tensorflow.python.keras.optimizers <span class="keyword">import</span> RMSprop</span><br><span class="line"><span class="keyword">from</span> tensorflow.python.keras.optimizers <span class="keyword">import</span> Adam</span><br><span class="line"><span class="keyword">from</span> tensorflow.python.keras.callbacks <span class="keyword">import</span> EarlyStopping, ModelCheckpoint, TensorBoard, ReduceLROnPlateau</span><br></pre></td></tr></table></figure>
+<p><strong>分词和tokenize</strong></p>
+<p>首先我们去掉每个样本的标点符号，然后用jieba这个库分词，jieba分词返回一个生成器，没法直接进行tokenize，所以我们将分词结果转换成一个list，并将它索引化，这样每一例评价的文本变成一段索引数字，对应着预训练词向量模型中的词。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 进行分词和tokenize</span></span><br><span class="line"><span class="comment"># train_tokens是一个长长的list，其中含有4000个小list，对应每一条评价</span></span><br><span class="line"></span><br><span class="line">train_tokens = []</span><br><span class="line"><span class="keyword">for</span> text <span class="keyword">in</span> origin_train_txts:</span><br><span class="line">    <span class="comment"># 去掉标点</span></span><br><span class="line">    text = re.sub(<span class="string">"[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？、~@#￥%……&amp;*（）]+"</span>, <span class="string">""</span>, text)</span><br><span class="line">    <span class="comment"># 结巴分词</span></span><br><span class="line">    cut = jieba.cut(text)</span><br><span class="line">    cut_list = [ i <span class="keyword">for</span> i <span class="keyword">in</span> cut ]</span><br><span class="line">    <span class="keyword">for</span> i, word <span class="keyword">in</span> enumerate(cut_list):</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 将词转换为索引index</span></span><br><span class="line">            cut_list[i] = cn_model.vocab[word].index</span><br><span class="line">        <span class="keyword">except</span> KeyError:</span><br><span class="line">            <span class="comment"># 如果词不在字典中，则输出0</span></span><br><span class="line">            cut_list[i] = <span class="number">0</span></span><br><span class="line">    train_tokens.append(cut_list)</span><br><span class="line"></span><br><span class="line">print(len(train_tokens))</span><br><span class="line">print(train_tokens[<span class="number">0</span>:<span class="number">10</span>])</span><br></pre></td></tr></table></figure>
+<pre><code>Building prefix dict from the default dictionary ...
+Dumping model to file cache /tmp/jieba.cache
+Loading model cost 1.198 seconds.
+Prefix dict has been built succesfully.
+
+
+4000
+[[0, 1, 651, 66551, 4656, 562, 1191, 1562, 34, 13758, 2012, 0, 2020, 6296, 6729, 63, 3649, 15627, 1, 7224, 223, 1845, 1, 38926, 1486, 107489, 11, 15, 3783, 60, 124, 308, 10395, 100, 29, 872], [7224, 15, 95, 5976, 24, 31233, 173, 67, 2380, 497, 9074, 5139, 87, 7224, 5249, 103, 1113, 1, 869, 1487, 2871, 333, 470, 95, 67, 879, 83986, 1321, 57, 0, 0, 1, 110, 578, 562, 38, 15, 95, 9081, 457, 2567, 10199, 11216, 0, 148, 148, 2360, 2360, 7215, 158, 893, 1426, 38, 1353, 7224, 2289, 9265, 388, 0, 38, 35, 48, 44101, 33287, 810, 115835, 95, 9081, 10984, 1117, 0, 147, 3466, 562, 657, 51, 6781, 1622, 1, 62779, 211, 169, 9852, 1256, 88407, 87], [40, 562, 25, 310, 614, 0, 2852, 38, 72, 3, 66, 1845, 4, 8, 119, 1487, 7261, 1, 10, 56, 183, 14862, 10, 614], [1105, 29184, 34, 562, 949, 18, 34, 72, 38, 15, 46465, 2001, 1175, 366, 48, 46465, 0, 175, 1419, 3365, 34, 7314], [6247, 3, 7, 1487, 659, 3, 0, 7723, 237, 67, 4429, 40, 640, 1038], [2004, 3, 0, 774, 2852, 3930, 40, 2813, 4656, 40, 562, 8241, 1191, 18, 562], [82, 135465, 24, 130, 138, 39, 44289, 9512, 1, 1191, 779, 34, 236, 27, 190, 517, 161, 21119, 48, 7227, 49095, 3819, 11780, 95173, 11780, 384, 123, 9819, 2657, 51127, 35, 16, 15, 27, 659, 64, 1, 7224, 63, 1191, 4, 5044, 1, 8, 0, 627, 55, 6, 34, 1896, 274, 32739, 6582, 65110, 5, 4305, 63441, 9917, 1366, 6, 8, 27180, 312, 15, 62631, 100, 1886, 6, 4225, 6, 3306, 136, 482, 29406, 16, 242, 116, 0, 35, 748, 110892, 6, 233, 116, 12961, 484, 11, 3069, 51, 6, 2733, 41, 84749, 27, 48, 7227, 1, 1138, 39039, 69612, 2922, 209, 598, 27, 509, 1487, 15, 1487, 63, 2042, 3, 11780, 8705, 13, 15, 8633, 100, 130, 6, 61858, 24, 10254, 48234, 1304, 55, 15370, 4305, 51, 6, 9475, 2953, 57714, 9686, 309, 4026, 88, 4305, 18, 760, 48, 6, 2737, 26572, 70, 51, 3, 0, 48234, 6, 1212, 84, 275, 14684, 6, 8, 12451, 63634, 509, 3, 2437, 2852, 38, 8649, 15565, 4305, 1184, 51, 6, 62993, 241490, 4026, 88, 4305, 70, 3306, 8649, 25862, 6, 7820, 84, 1304, 20760, 15370, 4305, 412, 15, 27, 5916, 84, 2878, 1487, 484, 569, 1487, 412, 23083, 1, 366, 40, 9475, 2595, 22, 399, 27, 4819, 1645, 82, 29, 653, 64, 1, 3507, 27, 3332, 1845, 1340, 1, 1536, 11, 2564, 7124, 55, 12, 1044, 34, 7869, 6, 40, 760, 48, 1845, 614, 1, 4656, 1604, 51, 1487, 598, 1, 2730, 5, 95, 19067, 832, 11, 169, 72, 213, 22, 357, 11, 778, 1845, 13675, 1112, 56203, 44, 133, 46, 1, 1536, 1755, 117, 532, 0, 55, 79, 7179, 4910, 11620, 3563, 614, 13758, 1191, 33216, 2643, 7060, 27396, 22, 4, 34, 10, 374, 1, 168, 293, 19888, 1845, 95173, 4652, 127, 10, 34, 1616, 86, 79, 40494, 1, 1191, 1703, 1623, 3, 4910, 27, 4952, 49095, 57, 11641, 7227, 48, 7227, 62554, 338, 57, 11641, 44289, 9512], [949, 5249, 11, 562, 651, 18, 40, 35, 25, 21604, 5915, 3, 33, 1872, 5020, 3, 41, 366], [3930, 246, 40, 562, 3365, 1191, 11, 7347, 1845, 348, 2158, 3, 2732, 7723, 0, 0, 1, 15565, 34, 2495, 2012, 4429, 40, 9483, 88], [1162, 11780, 44289, 9512, 44512, 0, 7869, 1845, 1536, 2643, 21531, 1191, 57, 96, 1, 5593, 6, 11780, 64, 1, 18369, 221, 0, 0, 1845, 81, 107, 1527, 1191, 10, 15, 7, 7723, 829, 9153, 9512, 333, 562, 2694, 6, 57, 30, 11780, 0, 856, 1, 2497, 4, 158579, 2437, 0, 26782, 1191, 124, 15, 135, 228, 18881, 11276, 276, 455, 5166]]
+</code></pre><p>从上面的结果我们很容易就可以看出来，很多词是无法从知乎的语料库中找到相对应的索引的，除此之外，更加严重的问题是，每一个文本评价(句子)-&gt;index list，这个过程中由于每个句子不同，所以我们很容易看到这些index list的长度是不一样的，这不利于我们接下来深度学习的模型构造</p>
+<p>所以我们需要把所有的index list填充成为相同长度的index list并且用无效索引0作为填充值，往前面填充0,或者往尾部填充0</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 获得所有tokens的长度</span></span><br><span class="line">num_tokens = [ len(tokens) <span class="keyword">for</span> tokens <span class="keyword">in</span> train_tokens ]</span><br><span class="line">num_tokens = np.array(num_tokens)</span><br><span class="line"></span><br><span class="line">print(num_tokens[<span class="number">0</span> : <span class="number">10</span>])</span><br><span class="line"></span><br><span class="line">print(<span class="string">"平均tokens的长度"</span> + str(np.mean(num_tokens)))</span><br><span class="line"></span><br><span class="line">print(<span class="string">"最长tokens的长度"</span> + str(np.max(num_tokens)))</span><br></pre></td></tr></table></figure>
+<pre><code>[ 36  86  24  22  14  15 317  18  25  62]
+平均tokens的长度71.4495
+最长tokens的长度1540
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在这里我们需要了解长度分布情况</span></span><br><span class="line"></span><br><span class="line">plt.hist(np.log(num_tokens), bins = <span class="number">100</span>)</span><br><span class="line">plt.xlim((<span class="number">0</span>,<span class="number">10</span>))</span><br><span class="line">plt.ylabel(<span class="string">'number of tokens'</span>)</span><br><span class="line">plt.xlabel(<span class="string">'length of tokens'</span>)</span><br><span class="line">plt.title(<span class="string">'Distribution of tokens length'</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<p><img src="NLPDemo_files/demo_22_0.png" alt="png"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 上述图像接近正态分布</span></span><br><span class="line"><span class="comment"># 根据 3 sigma 定理（正态分布规律），我们使用平均值 +- 2*标准差可以覆盖百分之95以上的case</span></span><br><span class="line"><span class="comment"># 取tokens平均值并加上两个tokens的标准差，</span></span><br><span class="line"><span class="comment"># 假设tokens长度的分布为正态分布，则max_tokens这个值可以涵盖95%左右的样本</span></span><br><span class="line">max_tokens = np.mean(num_tokens) + <span class="number">2</span> * np.std(num_tokens)</span><br><span class="line">max_tokens = int(max_tokens)</span><br><span class="line"></span><br><span class="line">print(max_tokens)</span><br></pre></td></tr></table></figure>
+<pre><code>236
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 计算一下覆盖了多少case</span></span><br><span class="line"><span class="comment"># 取tokens的长度为236时，大约95%的样本被涵盖</span></span><br><span class="line"><span class="comment"># 我们对长度不足的进行padding，超长的进行修剪</span></span><br><span class="line">np.sum( num_tokens &lt; max_tokens ) / len(num_tokens)</span><br></pre></td></tr></table></figure>
+<pre><code>0.9565
+</code></pre><p>在这之后，我们会需要debug，但是呢，现在的sample都是index list形式的，所以不是很好直观地反映样本情况，我们需要构造一个函数来反过来通过index在cn_model中求vocab</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">detokenize</span><span class="params">(tokens)</span>:</span></span><br><span class="line">    <span class="string">'''</span></span><br><span class="line"><span class="string">    translate tokens to text</span></span><br><span class="line"><span class="string">    '''</span></span><br><span class="line">    text = <span class="string">''</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> tokens:</span><br><span class="line">        <span class="keyword">if</span> i != <span class="number">0</span>:</span><br><span class="line">            text = text + cn_model.index2word[i]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            text = text + <span class="string">' '</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> text</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">text = detokenize(train_tokens[<span class="number">0</span>])</span><br><span class="line">print(text)</span><br></pre></td></tr></table></figure>
+<pre><code>的价格物超所值早餐不错服务也好很人性化呵呵 碰到卫生间马桶里撒花瓣的宾馆不过酒店的洗浴中心美容美发都在装修中不能使用预定时没有提到
+</code></pre><p>由此可见，”单人间”这个词语丢失了, 标点符号也被舍弃了</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 原始文本</span></span><br><span class="line">print(origin_train_txts[<span class="number">0</span>])</span><br></pre></td></tr></table></figure>
+<pre><code>单人间的价格物超所值.早餐不错.服务也好,很人性化.呵呵,第一次碰到卫生间马桶里撒花瓣的宾馆.不过酒店的洗浴中心,美容美发都在装修中不能使用.预定时没有提到.
+</code></pre><p><strong>准备Embedding Matrix</strong><br>现在我们来为模型准备embedding matrix（词向量矩阵），根据keras的要求，我们需要准备一个维度为$(numwords, embeddingdim)$的矩阵，num words代表我们使用的词汇的数量，emdedding dimension在我们现在使用的预训练词向量模型中是300，每一个词汇都用一个长度为300的向量表示。<br>注意我们只选择使用前50k个使用频率最高的词，在这个预训练词向量模型中，一共有260万词汇量，如果全部使用在分类问题上会很浪费计算资源，因为我们的训练样本很小，一共只有4k，如果我们有100k，200k甚至更多的训练样本时，在分类问题上可以考虑减少使用的词汇量。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">print(embedding_dim)</span><br><span class="line"></span><br><span class="line">num_words = <span class="number">50000</span></span><br><span class="line"><span class="comment"># 初始化embedding_matrix，之后在keras上进行应用</span></span><br><span class="line">embedding_matrix = np.zeros((num_words, embedding_dim))</span><br><span class="line"><span class="comment"># embedding_matrix为一个 [num_words，embedding_dim] 的矩阵</span></span><br><span class="line"><span class="comment"># 维度为 50000 * 300</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(num_words):</span><br><span class="line">    embedding_matrix[i,:] = cn_model[cn_model.index2word[i]]</span><br><span class="line"></span><br><span class="line">embedding_matrix = embedding_matrix.astype(<span class="string">'float32'</span>)</span><br></pre></td></tr></table></figure>
+<pre><code>300
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 检查index是否对应，</span></span><br><span class="line"><span class="comment"># 输出300意义为长度为300的embedding向量一一对应</span></span><br><span class="line">print(np.sum( cn_model[cn_model.index2word[<span class="number">333</span>]] == embedding_matrix[<span class="number">333</span>] ))</span><br><span class="line"></span><br><span class="line"><span class="comment"># embedding_matrix的维度，</span></span><br><span class="line"><span class="comment"># 这个维度为keras的要求，后续会在模型中用到</span></span><br><span class="line">print(embedding_matrix.shape)</span><br></pre></td></tr></table></figure>
+<pre><code>300
+(50000, 300)
+</code></pre><p>接下来,我们要完成上一步已经提到过步骤,那就是完成tokens(由索引构成的列表)长度的标准化<br>不够长的index list我们往这个list中填充无效索引0, 这里我们选择往列表前缀填充0, 当index list长度太长的时候,我们要对它进行一定的裁剪</p>
+<p>由上面的实验结果我们可以知道, 236可以覆盖至少百分之95的sample, 所以我们要使用236作为标准化后的index list长度</p>
+<p>这一步也就是所谓的 <strong>padding (填充) 和truncating (修剪) </strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 进行padding和truncating， 输入的train_tokens是一个list</span></span><br><span class="line"><span class="comment"># 返回的train_pad是一个numpy array</span></span><br><span class="line">train_pad = pad_sequences(train_tokens, maxlen=max_tokens, padding=<span class="string">'pre'</span>, truncating=<span class="string">'pre'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 为了提高训练效率,我们只选择词料库中的前50k个高频词作为训练集的参照</span></span><br><span class="line"><span class="comment"># 所以超出五万个词向量的词用0代替</span></span><br><span class="line">train_pad[ train_pad &gt;= num_words ] = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 我们随便选择一个经过长度标准化的tokens(index list)看看是一个什么样的结果</span></span><br><span class="line">print(train_pad[<span class="number">100</span>])</span><br></pre></td></tr></table></figure>
+<pre><code>[    0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0 11670
+    40   640    35  1845  1487   348  2495    67    10   369    53   143
+  1487     1 21604   169   710   865     1 14453  1487     5   784    11
+   254   117    34   786  1883    30   369  1028]
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 准备target向量，前2000样本为1，后2000为0</span></span><br><span class="line"><span class="comment"># 这一步的意思是给之前已经打包进来的tokens打一个标签</span></span><br><span class="line"><span class="comment"># 前2000个是positive评价, 后2000个是negative评价</span></span><br><span class="line"><span class="comment"># 将两个生成的一维list组合起来就可以了</span></span><br><span class="line">train_target = np.concatenate( (np.ones(<span class="number">2000</span>), np.zeros(<span class="number">2000</span>)) )</span><br><span class="line">print(len(train_target))</span><br><span class="line">print(train_target[<span class="number">1997</span>:<span class="number">2003</span>])</span><br></pre></td></tr></table></figure>
+<pre><code>4000
+[1. 1. 1. 0. 0. 0.]
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 分割这些原始的集合, 并且划分出训练集和测试集</span></span><br><span class="line"><span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split</span><br><span class="line"></span><br><span class="line"><span class="comment"># 90%用来作为训练集, 10%用来作为测试集</span></span><br><span class="line">X_train, X_test, y_train, y_test = train_test_split(train_pad, train_target, test_size=<span class="number">0.1</span>, random_state=<span class="number">12</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 我们任意取一个sample来确认一下</span></span><br><span class="line"></span><br><span class="line">print(detokenize(X_train[<span class="number">29</span>]))</span><br><span class="line">print(<span class="string">"positive? : %d"</span> % y_train[<span class="number">29</span>])</span><br></pre></td></tr></table></figure>
+<pre><code>                                                                                                                                                                                                                      一般情况吧这个价位的能有这样的硬件条件也算不错了适合情人约会不想 的
+positive? : 1
+</code></pre><p>现在我们用keras搭建LSTM模型，模型的第一层是Embedding层，只有当我们把tokens索引转换为词向量矩阵之后，才可以用神经网络对文本进行处理。<br>keras提供了Embedding接口，避免了繁琐的稀疏矩阵操作。<br>在Embedding层我们输入的矩阵为：$$(batchsize, maxtokens)$$<br>输出矩阵为： $$(batchsize, maxtokens, embeddingdim)$$</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 开始构造model</span></span><br><span class="line"></span><br><span class="line">model = Sequential()</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">print(num_words)</span><br><span class="line">print(embedding_dim)</span><br><span class="line">print(max_tokens)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 模型第一层为embedding</span></span><br><span class="line">model.add(Embedding(num_words, embedding_dim, weights=[embedding_matrix], input_length=max_tokens, </span><br><span class="line">                    trainable=<span class="keyword">False</span>))</span><br></pre></td></tr></table></figure>
+<pre><code>50000
+300
+236
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">model.add(Bidirectional(LSTM(units=<span class="number">32</span>, return_sequences=<span class="keyword">True</span>)))</span><br><span class="line">model.add(LSTM(units=<span class="number">16</span>, return_sequences=<span class="keyword">False</span>))</span><br></pre></td></tr></table></figure>
+<p><strong>构建模型</strong><br>我在这个教程中尝试了几种神经网络结构，因为训练样本比较少，所以我们可以尽情尝试，训练过程等待时间并不长：<br><strong>GRU：</strong>如果使用GRU的话，测试样本可以达到87%的准确率，但我测试自己的文本内容时发现，GRU最后一层激活函数的输出都在0.5左右，说明模型的判断不是很明确，信心比较低，而且经过测试发现模型对于否定句的判断有时会失误，我们期望对于负面样本输出接近0，正面样本接近1而不是都徘徊于0.5之间。<br><strong>BiLSTM：</strong>测试了LSTM和BiLSTM，发现BiLSTM的表现最好，LSTM的表现略好于GRU，这可能是因为BiLSTM对于比较长的句子结构有更好的记忆，有兴趣的朋友可以深入研究一下。<br>Embedding之后第，一层我们用BiLSTM返回sequences，然后第二层16个单元的LSTM不返回sequences，只返回最终结果，最后是一个全链接层，用sigmoid激活函数输出结果。 </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</span><br><span class="line"><span class="comment"># 我们使用adam以0.001的learning rate进行优化</span></span><br><span class="line">optimizer = Adam(lr=<span class="number">1e-3</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">model.compile(loss=<span class="string">'binary_crossentropy'</span>,</span><br><span class="line">              optimizer=optimizer,</span><br><span class="line">              metrics=[<span class="string">'accuracy'</span>])</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 我们来看一下模型的结构，一共90k左右可训练的变量</span></span><br><span class="line">model.summary()</span><br></pre></td></tr></table></figure>
+<pre><code>_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+embedding_2 (Embedding)      (None, 236, 300)          15000000  
+_________________________________________________________________
+bidirectional (Bidirectional (None, 236, 64)           85248     
+_________________________________________________________________
+lstm_1 (LSTM)                (None, 16)                5184      
+_________________________________________________________________
+dense (Dense)                (None, 1)                 17        
+=================================================================
+Total params: 15,090,449
+Trainable params: 90,449
+Non-trainable params: 15,000,000
+_________________________________________________________________
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 建立一个权重的存储点</span></span><br><span class="line">path_checkpoint = <span class="string">'sentiment_checkpoint.keras'</span></span><br><span class="line">checkpoint = ModelCheckpoint(filepath=path_checkpoint, monitor=<span class="string">'val_loss'</span>,</span><br><span class="line">                                      verbose=<span class="number">1</span>, save_weights_only=<span class="keyword">True</span>,</span><br><span class="line">                                      save_best_only=<span class="keyword">True</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 尝试加载已训练模型</span></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    model.load_weights(path_checkpoint)</span><br><span class="line"><span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">    print(e)</span><br></pre></td></tr></table></figure>
+<pre><code>Unable to open file (unable to open file: name = &apos;sentiment_checkpoint.keras&apos;, errno = 2, error message = &apos;No such file or directory&apos;, flags = 0, o_flags = 0)
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 定义early stoping如果3个epoch内validation loss没有改善则停止训练</span></span><br><span class="line">earlystopping = EarlyStopping(monitor=<span class="string">'val_loss'</span>, patience=<span class="number">3</span>, verbose=<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 自动降低learning rate</span></span><br><span class="line">lr_reduction = ReduceLROnPlateau(monitor=<span class="string">'val_loss'</span>,</span><br><span class="line">                                       factor=<span class="number">0.1</span>, min_lr=<span class="number">1e-5</span>, patience=<span class="number">0</span>,</span><br><span class="line">                                       verbose=<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 定义callback函数</span></span><br><span class="line">callbacks = [</span><br><span class="line">    earlystopping, </span><br><span class="line">    checkpoint,</span><br><span class="line">    lr_reduction</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 开始训练</span></span><br><span class="line">model.fit(X_train, y_train,</span><br><span class="line">          validation_split=<span class="number">0.1</span>, </span><br><span class="line">          epochs=<span class="number">20</span>,</span><br><span class="line">          batch_size=<span class="number">128</span>,</span><br><span class="line">          callbacks=callbacks)</span><br></pre></td></tr></table></figure>
+<pre><code>Train on 3240 samples, validate on 360 samples
+WARNING:tensorflow:From /usr/lib/python3.7/site-packages/tensorflow/python/ops/math_ops.py:3066: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+Epoch 1/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.6279 - acc: 0.6637
+Epoch 00001: val_loss improved from inf to 0.52382, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 32s 10ms/sample - loss: 0.6268 - acc: 0.6651 - val_loss: 0.5238 - val_acc: 0.7528
+Epoch 2/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.4681 - acc: 0.7941
+Epoch 00002: val_loss improved from 0.52382 to 0.49189, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 32s 10ms/sample - loss: 0.4685 - acc: 0.7938 - val_loss: 0.4919 - val_acc: 0.7972
+Epoch 3/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.4387 - acc: 0.8031
+Epoch 00003: val_loss improved from 0.49189 to 0.46409, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 29s 9ms/sample - loss: 0.4392 - acc: 0.8028 - val_loss: 0.4641 - val_acc: 0.7889
+Epoch 4/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.3542 - acc: 0.8553
+Epoch 00004: val_loss improved from 0.46409 to 0.40490, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 29s 9ms/sample - loss: 0.3524 - acc: 0.8562 - val_loss: 0.4049 - val_acc: 0.8250
+Epoch 5/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.3913 - acc: 0.8253
+Epoch 00005: val_loss improved from 0.40490 to 0.40423, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 29s 9ms/sample - loss: 0.3910 - acc: 0.8253 - val_loss: 0.4042 - val_acc: 0.8361
+Epoch 6/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.3222 - acc: 0.8656
+Epoch 00006: val_loss improved from 0.40423 to 0.39816, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 34s 11ms/sample - loss: 0.3246 - acc: 0.8642 - val_loss: 0.3982 - val_acc: 0.8278
+Epoch 7/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.3409 - acc: 0.8600
+Epoch 00007: val_loss improved from 0.39816 to 0.38914, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 29s 9ms/sample - loss: 0.3402 - acc: 0.8605 - val_loss: 0.3891 - val_acc: 0.8389
+Epoch 8/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.2806 - acc: 0.8919
+Epoch 00008: val_loss did not improve from 0.38914
+
+Epoch 00008: ReduceLROnPlateau reducing learning rate to 0.00010000000474974513.
+3240/3240 [==============================] - 28s 9ms/sample - loss: 0.2825 - acc: 0.8914 - val_loss: 0.3940 - val_acc: 0.8361
+Epoch 9/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.2689 - acc: 0.8969
+Epoch 00009: val_loss improved from 0.38914 to 0.36922, saving model to sentiment_checkpoint.keras
+3240/3240 [==============================] - 28s 9ms/sample - loss: 0.2694 - acc: 0.8960 - val_loss: 0.3692 - val_acc: 0.8528
+Epoch 10/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.2483 - acc: 0.9081
+Epoch 00010: val_loss did not improve from 0.36922
+
+Epoch 00010: ReduceLROnPlateau reducing learning rate to 1.0000000474974514e-05.
+3240/3240 [==============================] - 29s 9ms/sample - loss: 0.2483 - acc: 0.9080 - val_loss: 0.3737 - val_acc: 0.8500
+Epoch 11/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.2425 - acc: 0.9075
+Epoch 00011: val_loss did not improve from 0.36922
+
+Epoch 00011: ReduceLROnPlateau reducing learning rate to 1e-05.
+3240/3240 [==============================] - 28s 9ms/sample - loss: 0.2419 - acc: 0.9080 - val_loss: 0.3747 - val_acc: 0.8472
+Epoch 12/20
+3200/3240 [============================&gt;.] - ETA: 0s - loss: 0.2415 - acc: 0.9087
+Epoch 00012: val_loss did not improve from 0.36922
+3240/3240 [==============================] - 29s 9ms/sample - loss: 0.2405 - acc: 0.9090 - val_loss: 0.3730 - val_acc: 0.8500
+Epoch 00012: early stopping
+
+
+
+
+
+&lt;tensorflow.python.keras.callbacks.History at 0x7f8ba949f5c0&gt;
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">result = model.evaluate(X_test, y_test)</span><br><span class="line">print(<span class="string">'Accuracy:&#123;0:.2%&#125;'</span>.format(result[<span class="number">1</span>]))</span><br></pre></td></tr></table></figure>
+<pre><code>400/400 [==============================] - 2s 6ms/sample - loss: 0.3132 - acc: 0.8825
+Accuracy:88.25%
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">predict_sentiment</span><span class="params">(text)</span>:</span></span><br><span class="line">    print(text)</span><br><span class="line">    <span class="comment"># 去标点</span></span><br><span class="line">    text = re.sub(<span class="string">"[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？、~@#￥%……&amp;*（）]+"</span>, <span class="string">""</span>,text)</span><br><span class="line">    <span class="comment"># 分词</span></span><br><span class="line">    cut = jieba.cut(text)</span><br><span class="line">    cut_list = [ i <span class="keyword">for</span> i <span class="keyword">in</span> cut ]</span><br><span class="line">    <span class="comment"># tokenize</span></span><br><span class="line">    <span class="keyword">for</span> i, word <span class="keyword">in</span> enumerate(cut_list):</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            cut_list[i] = cn_model.vocab[word].index</span><br><span class="line">            <span class="keyword">if</span> cut_list[i] &gt;= <span class="number">50000</span>:</span><br><span class="line">                cut_list[i] = <span class="number">0</span></span><br><span class="line">        <span class="keyword">except</span> KeyError:</span><br><span class="line">            cut_list[i] = <span class="number">0</span></span><br><span class="line">    <span class="comment"># padding</span></span><br><span class="line">    tokens_pad = pad_sequences([cut_list], maxlen=max_tokens,</span><br><span class="line">                           padding=<span class="string">'pre'</span>, truncating=<span class="string">'pre'</span>)</span><br><span class="line">    <span class="comment"># 预测</span></span><br><span class="line">    result = model.predict(x=tokens_pad)</span><br><span class="line">    coef = result[<span class="number">0</span>][<span class="number">0</span>]</span><br><span class="line">    <span class="keyword">if</span> coef &gt;= <span class="number">0.5</span>:</span><br><span class="line">        print(<span class="string">'是一例正面评价'</span>,<span class="string">'output=%.2f'</span>%coef)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        print(<span class="string">'是一例负面评价'</span>,<span class="string">'output=%.2f'</span>%coef)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">test_list = [</span><br><span class="line">    <span class="string">'酒店设施不是新的，服务态度很不好'</span>,</span><br><span class="line">    <span class="string">'酒店卫生条件非常不好'</span>,</span><br><span class="line">    <span class="string">'床铺非常舒适'</span>,</span><br><span class="line">    <span class="string">'房间很凉，不给开暖气'</span>,</span><br><span class="line">    <span class="string">'房间很凉爽，空调冷气很足'</span>,</span><br><span class="line">    <span class="string">'酒店环境不好，住宿体验很不好'</span>,</span><br><span class="line">    <span class="string">'房间隔音不到位'</span> ,</span><br><span class="line">    <span class="string">'晚上回来发现没有打扫卫生'</span>,</span><br><span class="line">    <span class="string">'因为过节所以要我临时加钱，比团购的价格贵'</span></span><br><span class="line">]</span><br><span class="line"><span class="keyword">for</span> text <span class="keyword">in</span> test_list:</span><br><span class="line">    predict_sentiment(text)</span><br></pre></td></tr></table></figure>
+<pre><code>酒店设施不是新的，服务态度很不好
+是一例负面评价 output=0.07
+酒店卫生条件非常不好
+是一例负面评价 output=0.06
+床铺非常舒适
+是一例正面评价 output=0.55
+房间很凉，不给开暖气
+是一例负面评价 output=0.13
+房间很凉爽，空调冷气很足
+是一例负面评价 output=0.47
+酒店环境不好，住宿体验很不好
+是一例负面评价 output=0.04
+房间隔音不到位
+是一例负面评价 output=0.13
+晚上回来发现没有打扫卫生
+是一例负面评价 output=0.18
+因为过节所以要我临时加钱，比团购的价格贵
+是一例负面评价 output=0.09
+</code></pre><p><strong>错误分类的文本</strong><br>经过查看，发现错误分类的文本的含义大多比较含糊，就算人类也不容易判断极性，如index为101的这个句子，好像没有一点满意的成分，但这例子评价在训练样本中被标记成为了正面评价，而我们的模型做出的负面评价的预测似乎是合理的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">y_actual = np.array(y_test)</span><br><span class="line"></span><br><span class="line">y_pred = model.predict(X_test)</span><br><span class="line">y_pred = y_pred.T[<span class="number">0</span>]</span><br><span class="line">y_pred = [<span class="number">1.0</span> <span class="keyword">if</span> p&gt;= <span class="number">0.5</span> <span class="keyword">else</span> <span class="number">0</span> <span class="keyword">for</span> p <span class="keyword">in</span> y_pred]</span><br><span class="line">y_pred = np.array(y_pred)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 找出错误分类的索引</span></span><br><span class="line">misclassified = np.where( y_pred != y_actual )[<span class="number">0</span>]</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 输出所有错误分类的索引</span></span><br><span class="line">print(len(misclassified))</span><br><span class="line">print(len(X_test))</span><br></pre></td></tr></table></figure>
+<pre><code>47
+400
+</code></pre><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 我们来找出错误分类的样本看看</span></span><br><span class="line">print(misclassified)</span><br><span class="line"><span class="keyword">for</span> idx <span class="keyword">in</span> misclassified:</span><br><span class="line">    print(detokenize(X_test[idx]))</span><br><span class="line">    print(<span class="string">'预测的分类'</span>, y_pred[idx])</span><br><span class="line">    print(<span class="string">'实际的分类'</span>, y_actual[idx])</span><br></pre></td></tr></table></figure>
+<pre><code>[  1   9  14  20  51  57  70  71  85  88  89  91  94 114 124 137 139 140
+ 146 170 171 198 199 206 210 229 231 236 242 250 262 270 280 292 323 325
+ 326 334 335 336 345 357 371 380 387 389 393]
+                                                                                                                                                                                                                  只是 近出入 有蚊子  基本上夠一定的水平免费注册网站导航宾馆索引服务说明关于携程 英
+预测的分类 0.0
+实际的分类 1.0
+车上的人仔细辨认结果还是 很多地方好不容易才开到酒店大门口那天正好下小雨门口保安只有 跑来我在酒店门口依然看不到车库入口要求保安带路于是他安排一个管理车库的工人 那工人带我们到车库后一听说我们是入住客人不能向他交停车费他立刻一溜烟不见人影害得我们找电梯 酒店找了半天这种情况也许以前很难体现出来也许平时也不觉得怎样过分但这几件事集中起来就反映了该酒店的管理薄弱的一方面最重要的是我觉得作为一个好评如潮的酒店更不应该了当然事后当晚值班经理的及时道歉和升级房间等等补偿行为也体现了该酒店管理层对客人的重视体现了酒店有错及时改进的诚恳态度而且 还通过携程要向我电话道歉我也确实感到该酒店能有如此态度很难能可贵了本来我不想点评此次事情但后来觉得也不妨通过我的客观褒贬让大家看到该酒店的真实品质也许我下次 考虑入住该酒店只是仍然希望酒店今后多积极发现不足免得以后入住该酒店的客人那么麻烦同时也影响自己的声誉
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                                                            感觉环境服务方面还不够位房间里面的洗浴设施有点发黄需要改善
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                                    服务基本上没有非常失望其酒店的服务和周围的优雅环境很 总而言之非常失望更不用谈性价比了
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                                          房间比较干净卫生间太小转身都费劲地理位置一半 胡同里不容易找到服务一般
+预测的分类 0.0
+实际的分类 1.0
+店主的妹妹向我们介绍推荐景点行程安排之类的因我们不喜欢事前安排喜欢随性游玩在和黎阿姨聊了一会后并没有让其安排而是 在 游玩中了解到他们安排或者推荐游客都能有一定收益的 我们退房    到   因为行李较多所以特意问服务员是否可以在 上岸直接去桂林服务员也不清楚就跑去 阿姨回来后告知可以在 直接去桂林这样我们就背上所有行李  了然而实际上  是从 乘车去  开始乘机动  到 附近中间不下 直接返回 这样就是说我们要背着重重的行李来回跑而当初的本意是在如果回桂林还是必须返回 我们就找地方寄存行李不背着来回跑很是不厚道啊总体评价风景不错躺床上能看到 的 景观房但是不推荐住因为到晚上之后就没什么 可做只能去 城里其实在那里不管什么宾馆只要 肯定能看到山水回来还要找出租车或摩的；房间里边都没有宽带；最好自带洗漱用品；服务员还是很厚道很淳朴的
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                             除了房间门的隔音效果和 不强之外别的都还不错我又 将 卡片插在 了到北京才记起来赶紧打电话过去告诉我服务员收起来了 后再入住时找到了感谢
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                 房间 传说的 一个 还是真大除了这个好像没有其他的优点了早上赶火车到的想洗澡空调没有水还是有时无最奇怪的是淋浴竟然是要把那个小开关 按而不是拉这是我发现的 害我还无知的问前台打扫卫生 吸尘器竟然 早餐 早餐什么都没有20块太不值了电梯 顶楼21楼等个电梯要抽几支烟的不过服务员还是不错的不过诸多不快被美丽的景色和服务员的笑脸给抹杀了
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                   的  齐全包括洗浴间小毛巾吹风机等房屋装修新服务态度好如前台 好位于市中心但是 道而喧闹房间隔音效果不好早餐一般补充点评2007年9月4日：房屋价格适中但是 预定没有 该酒店前台价格与 一样
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                                                 酒店的房间很舒服但是打电话询问酒店位置的时候前台说不清楚;餐厅由于要接待团队就不能为 服务而且理直气壮
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                       房间非常小房间设施非常旧因为装修至今已经10年了房间空气非常 打开门 非常大的烟味和 迎面扑来服务还不错虽然帮我从6 到了9楼但是房间空气依然非常差非常差非常差得不能接受
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                         我已经入住很多次了我之所以选择它是因为地理位置好但是 比较差而且餐饮价格也不合理并且现在装修噪音很大下次我是不会选择了宾馆反馈2008年1月7日：尊敬的宾客：由于酒店近期装修改造给您带来了 对此我们 根据客人反馈信息 对房价进行了调整还为入住 的客人赠送欢迎水果房内免费宽带上网等增值服务我们将秉承“宾客至上服务第一”的宗旨  
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                    房间 卫生间是很多 房间比较大大床不错我喜欢价格还可以就是 了不舒服服务员水平差不多 前老国营的水平下次 一家住不过据说小姐不错俺没试
+预测的分类 1.0
+实际的分类 0.0
+宽敞干净整洁隔音不错服务很温馨： 小 还有清凉的 和水果点点细节体现着一个 酒店的 再说点小插曲在前台服务生查看了预订情况推荐我升级我谢绝了他们的提议之后说 的是 我说我要大 貌似预订时是无法选择大床还是 的接着便打电话询问有没有豪华大床间听着他们一会儿说有一会儿说没有弄得我一头雾水最后告诉我：现在没有房间因为 酒店的缘故所以给我免费升级这个小插曲虽然让人有点不快但终究本着顾客是上帝的原则去解决问题比较满意以后 选择这里宾馆反馈2008年8月13日：感谢您选择 大酒店入住并对酒店予以认可看您的评论猜想您可能是通过网络直接预订的房间吧通过网络直接 没有对房间 的选项例如大床等 )如果 对房间有  拨打电话预订酒店和携程的预订人员会共同做好记录按您的要求提前准备房间携程 电话：800-820- -820- 手机；酒店 电话： - 再次对您的点评表示感谢祝 一切顺利
+预测的分类 0.0
+实际的分类 1.0
+      这家酒店虽然设施比较老价格比较贵很小的经济 还330但是早餐很不错服务更是不错服务生很 见主动过来帮忙拿东西临走我想把车里的垃圾找垃圾箱扔了正找呢服务生又主动过来问情况然后帮我把垃圾拿走扔掉了过了一个小时酒店打来电话问是不是衣服落他们那儿了可是我们上了高速回不去了于是留了地址请他们寄回来结果 一早衣服就到了所以感觉服务很好还特意打电话回去感谢他们这服务啊跟那个啥交通大厦对比一下啊那个天上地下啊停车没人管然后前台 没收到携程的订单还不跟携程联系非让我自己联系手机给她后她倒聊上了于是我生气出门走人结果就 的停车保安竟然  5块的停车费这个价格高一点房间小一点我也认了强烈建议携程把交通大厦从合作对象中剔除实在有损携程形象我想点评交通大厦来着因为很气愤就没有住所以不让我点评不过我给携程写了意见了也建议大家不要订交通大厦即使携程推荐
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                                                       也就占了个位置还可以到光内部设施和消耗品配备实在是不怎么样而且很贵
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                                     最大的优势是距火车站 坐公交去  等景点十分方便宾馆设施太陈旧电视效果差
+预测的分类 1.0
+实际的分类 0.0
+                                                          酒店硬件和位置都好但服务令人生气12 地震这 我通过携程入住了这酒店 因为办事延误了没有来得及退房下午携程问是否要退?但因已经过了 我们要求 结果被告知 房房价涨40元和50元了说是星期一是特价 取消特价了我说我们连同住了 应该是同一 酒店后来说如果当时通过携程预订住 也是 价的如果退房的话 半天的费还说三星以上宾馆 10服务费总之感觉象是被宰了今后是不会再入住这宾馆了补充点评2008年5月14日：补；由于天下雨我们要向酒店 并出示住房证告知我们是酒店客人谁知被告知先登记再每人押100元缺乏人性化同样的事发生在凤凰 酒店只要出示 登记就可以了
+预测的分类 0.0
+实际的分类 1.0
+人十分失望的 反馈2008年6月20日：感谢您选择入住上海绿地 全套房酒店并给予我们 的建议首先请允许我们为您简单介绍一下我们的酒店概况我们属于一家 连锁酒店集团提供高优质标准的 服务迎合不同种类客户的需求希望给为您及其他客人带来回家的感觉我们的客房最小面积为65平方米最大至100平方米不等 套房均配备简洁齐全的现代化 酒店提供餐饮 酒吧健身等一系列设施此次您所入住的行政套房其面积为75平方米每晚 元的房价 客房其设计风格和建筑布局比例以客厅为主在同区域五星级酒店中具有较高的性价比如客户想追求更加豪华舒适的套房也可选择我们的贵宾套房其 为85平方米其次我们酒店与携程 是合作伙伴关系我们总是以最优惠的价格最好的 提供给携程的客户们以保持长期友好的合作关系相信携程 也秉承同样的宗旨 地将每一家签约酒店推荐给忠实的客户最后再次感谢您的忠实建议希望下次能有机会为您提供更优质的服务谢谢
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                             一切还行就是对通过网络预订的房间为什么就不能灵活一点半天房都是合情合理的啊尤其是换住连锁酒店更应该 
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                    该酒店的确是靠近 --湖畔哦；但酒店的内部环境的确无法 哦走廊气味令人反感房间 不干净卫生间气味令人作呕 空调漏水“”只是前台接待小姐态度非常 客房服务的大嫂就太差了希望携程相关领导有空 一下建议有准备去 南山 的游客要么住 宾馆要么入住南山  景区内哦空气极佳挂三星有当地 的标准哦
+预测的分类 1.0
+实际的分类 0.0
+          7月25 家人到泰山玩通过携程订的华侨大厦的房间说是搞活动花280升级到360的房间但是实际我们也不知道280和360的房间到底是怎样的对华侨大厦的评价和以前很很多网友的评价一样：服务很热情但是设施太陈旧在 上看酒店的反馈说是有 的房间但是 的时候携程的工作人员不知道我们订的房间是否是 的 希望携程以后把工作做仔细一些入住华侨大厦从 前台带房间服务人都态度很好很热情对客人的要求反应很快我因为带了孩子要求  洗漱用品到房间刚放下电话没多久服务员就送来了对一些我们询问的怎么去泰山玩附近有什么好吃的等问题都很耐心的回答房间有欢迎 而且分量不小很实在呵呵但是华侨大厦的设施确实太陈旧了很多地方的墙纸已经脱落房间的浴室比较小而且没有独立的 感觉老人和小孩使用时比较不方便但是良好的服务还是可以弥补这些不足的而且价钱也不贵感觉还可以接受
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                      我5月30日入住6月1日退房但比较离谱的是当我5月31日外出办事时回来竟发现房间已经 当时我极其郁闷酒店也很纳闷幸好房间我没有放任何 还好酒店的应急方案不错并送了 水果致歉最好告诉我说是 员工 这个理由有点勉强
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                             该酒店位置  3分钟路程房间宽敞早餐可以甜点很好吃但大堂太小电梯少客人 和写字楼混用很不方便从房间装修看的确是个 但携程上却说是 标准实际上很难达到 水平该酒店最大问题是没有给客人准备免费袋装茶茶杯旁边有一小桶茶叶很容易误认为是免费的谁知结账 了我11块钱服务员的解释是如果要免费袋装茶宾馆可以 提供牵强的很
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                                            房间还比较干净交通方便离外滩 但外面声音太大休息不好
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                              房间大细节不好住过上海  三亚 这个 最差把我 的携程积分都弄丢了呵呵携程 我好 很烦最后还是没用补充点评2008年4月10日：是的空调也不好调节弄了几遍都不合适早餐那个简单简单得过分了
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                                                        价格实惠基本还可以宾馆反馈2008年4月17日：希望下次再入住本酒店
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                                              月之后再次入住一进门大厅里 女工作人员就叫得出我的名字很不一般服务没得说酒店位置也很好位于 中心
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                        房间价格  2元 所有价格还要 服务费房间设施一般   部 免费的机场巴士好像是对客人的赏赐坐了后觉得很不舒服这家酒店我以后是绝对不会去了其他 也都免了
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                          这家酒店位置房间性价比都不错的但不知是不是由于客人多服务自然下降携程的客人好象在这里 受欢迎每次入住要不是订的大 没有要不是房间没有要不是还没有打扫出来而且不能积会员卡的分前台说是上面规定的也没有什么依据补充点评2007年12月9日：这家酒店的服务越来越差 也旧了大不如从前以后不住了
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                            这次入住感到服务人员的工作态度不如以前整体工作热情也不象其他 那么专业因为 的房间满了于是给我升级到行政套房这个本来是不错的安排但是不知道为什么偏偏这个房间里早晚都有 股噪音；而我朋友住在我下面  就被行政 准备早餐的声音吵醒酒店2楼西餐厅服务还是很好的
+预测的分类 0.0
+实际的分类 1.0
+点评2008年8月3日：只能说服务人员的热情是可以打高分的但 很一般房间的设施实在太差房间里居然没有小冰箱提供的不是 是大的 不是很 我是看了诸位的评价后才下定决心订这酒店的但太失望了很怀疑这些高分是怎么 的宾馆反馈2008年8月13日：尊敬的先生：请允许我们这样称呼您因您入住时的姓名与宾客 姓名不一致非常感谢您的留言及对酒店提出的 对于您所指出的关于本酒店的各类硬件问题酒店方已有计划将于年底对客房及相关设施进行装修；同时对于酒店服务方面等出现的问题已引起酒店高层的高度关注酒店 对于此事进行彻底调查并对相关员工做出相应处理同时酒店 对员工进行各方面的培训加强服务意识提高服务品质；希望下次有机会为您提供更优质的服务我们已把您的信息存入 资料下次入住时我们会提供个性化服务最后再次感谢您对本酒店提出的各种建议以便于我们更好的为客人服务提高总体服务品质
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                                                 酒店不好找里面的环境还可以打车不方便
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                    网上介绍的比较好但是实际却是 现象交通非常不便晚上除非包车否则根本没法出行；另外酒店性质为居家酒店服务态度服务质量比较一般周围环境也没有传说中的那么诗意化如果想体验农村生活的话可以 否则可以考虑 街上一带的住宿
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                                                  设施一般大堂服务没有笑容其它方面还可以
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                                            酒店比较偏了虽然是在东方路上周围也没什么餐馆可以吃饭的
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                建议旅游的人住 这个酒店太远了交通不方便客房 但浴室 有异味白天水温 自己去的价格比携程的价格要便宜约150到180就能拿下不过服务态度停不错的
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                               海景花园是我所有住过的５星酒店中服务最好的一家另外他们的 餐厅非常地道并且 如果去青岛  它 补充点评2008年7月29日： ; ; ; ; ; ; ; ; ; ;
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                                              房间不算太小床不错虽然不 但也挺舒服干净最大的问题是上网太贵 抢钱似的为什么香港的酒店都没有免费上网呢
+预测的分类 0.0
+实际的分类 1.0
+                                                                   订了 高级房只有这种 才有 订的时候忘记注明要 的但是要了 早餐后来我的客人到了酒店前台说： 了 大床房我不知道携程是怎么跟 沟通的那天下着大雨客人也不能转其他酒店害我丢尽颜面后来携程的一个工作人员打电话过来除了顶嘴什么事情也不能帮我解决我认为： 了 早餐虽然我忘记了说一定要 的可是携程也应该帮我确认一下估计那天酒店生意好就随便把我的房间 大床房后来携程那个工作人员还说：你有可能带朋友来吃早餐才订 早餐的这很正常我觉得这个服务态度也真是够差的我一直在用 现在已经是白金了但是这样的服务态度我真的觉得很遗憾
+预测的分类 0.0
+实际的分类 1.0
+                                                        酒店地理位置较偏如无 不建议入住酒店在装修 方面并不能体现 的标准其实底子还是很不错的却弄得有些蛮荒的感觉如酒店 前后的草坪都未能很好的利用酒店的服务员很滑稽会用眼光注视客人但却不会问好那么还不如不注视入住时前台 男生还在用扬州话聊电话对客人 房间的装修很单调墙面上都是素色的墙纸大面积的 却无 装饰画单调无比特别是 的21寸电视实在 有些搞笑卫浴设施到都是 的勉强过关至于学 酒店的通透卫浴设计相对 酒店有些不伦不类吧酒店的自助早餐 没有变换菜式被好友不幸 呵呵如果你不是 苛刻的人还是能接受这样的酒店的只是离 实在有些距离哦还有酒店大厅进出的 反应极端的迟钝哈哈
+预测的分类 0.0
+实际的分类 1.0
+                                                                                                                                                                                                             位置比较好卫生条件也还行就是房间太小高级大床房的大床还不如一般酒店的 的床而且床实在是睡的不是很舒服
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                               酒店位置比较偏远按照地址打车去被送到另外一个相同地址的地方希望酒店引起注意房间格调很前卫也许年轻人还可以接受
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                          该酒店确实性价比不是很高距离该酒店500 的衡阳 应该会比这家好很多我也 价格了 208前台 年198携程价
+预测的分类 1.0
+实际的分类 0.0
+                                                                                                                                                                                                            绝对不是五星：晚8 去的2楼 没什么人用餐餐厅环境犹如一般小店餐具也很一般桌上没有餐巾纸没有牙签上菜也慢
+预测的分类 0.0
+实际的分类 1.0
+            由于在南京住的银河 感觉不错所以这次来成都退了 到万达 接机的师傅和行李员都非常的不错但接下来发生的事情让我觉得非常气愤问前台要了 房卡 是开不了门的然后去大堂换了张并出去吃东西可回来发现在前台 房卡还是开不了门在走廊里等了 才由行李员拿了 的房卡进房间发现 没有开然后打电话给房屋中心 也床最 的是我的房间 听见电梯机器的声音吵得睡不着最后打电话给大副换房间半夜 拿着大 在换房间 由此以来 发生在五星级酒店的事情宾馆反馈2008年3月25日：酒店回复：非常感谢您的光临和对我们 品牌的关注我们对您在饭店遇到的不快 也向您对我们饭店服务和设施中提出的不足致以诚挚的感谢我们将加强前台员工的培训和监督使服务质量提升把品牌做得更好并衷心的希望您有机会再来饭店体验我们各方面的提高
+预测的分类 1.0
+实际的分类 0.0
+                                                                             首先是让我满意的酒店接机服务这一点是和大家取得共识的了我是来 办事的去 办事在这里住还是非常方便的没有车服务员会 的帮我 让我比较感动的是 要去办事 却发现衣服挂了口子因为急着出去没时间处理而且本人 手艺也比较差于是 之中找到了服务员回来的时候衣服 了皮鞋也擦亮了一定没耽误事在这里对她们的服务表示小小的感谢补充点评2007年12月20日：看了大家点评小补充 ：鄙视一下 的那位朋友交教育基金才6块前还要报销没的报销还抱怨住高级酒店的人啊这是 话大家不要 实在看不过去了本人支持 
+预测的分类 0.0
+实际的分类 1.0
+</code></pre>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Deep-Learing/" rel="tag"># Deep Learing</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/01/27/01-pack/" rel="prev" title="01-pack">
+      <i class="fa fa-chevron-left"></i> 01-pack
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/06/17/Advanced-Programming-in-the-UNIX-Environment-1/" rel="next" title="Advanced Programming in the UNIX Environment 1">
+      Advanced Programming in the UNIX Environment 1 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#NLP%E6%83%85%E6%84%9F%E5%88%86%E6%9E%90%E7%9A%84%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95demo"><span class="nav-number">1.</span> <span class="nav-text">NLP情感分析的一个简单demo</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Hall</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Hall</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
