@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="学习gRPC 02 开始使用gRPC为什么要把这部分的内容作为文档保留下来，因为学习的过程中需要一些实践或者总结输出来巩固自己的记忆。就像我在周末刚刚完成书中第二章的实践，仅仅过去两天多，这部分内容和实践过程就已经被我忘的七七八八了。所以很多时候留存一个真实的文档一个重要的目的是在留存文档的过程中重新审视自己在实践中遇到的问题和坑，达到温故而知新的效果。 好，接下来是正文的内容 我们这次实验的目录">
+<meta property="og:type" content="article">
+<meta property="og:title" content="gRPC学习 2 开始使用gRPC">
+<meta property="og:url" content="http://yoursite.com/2022/03/16/gRPC-learn-2/index.html">
+<meta property="og:site_name" content="Hall">
+<meta property="og:description" content="学习gRPC 02 开始使用gRPC为什么要把这部分的内容作为文档保留下来，因为学习的过程中需要一些实践或者总结输出来巩固自己的记忆。就像我在周末刚刚完成书中第二章的实践，仅仅过去两天多，这部分内容和实践过程就已经被我忘的七七八八了。所以很多时候留存一个真实的文档一个重要的目的是在留存文档的过程中重新审视自己在实践中遇到的问题和坑，达到温故而知新的效果。 好，接下来是正文的内容 我们这次实验的目录">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-03-16T14:32:04.000Z">
+<meta property="article:modified_time" content="2022-03-16T16:19:27.110Z">
+<meta property="article:author" content="Hall">
+<meta property="article:tag" content="gRPC">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2022/03/16/gRPC-learn-2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>gRPC学习 2 开始使用gRPC | Hall</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hall</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">我的网上笔记本</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/03/16/gRPC-learn-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Hall">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hall">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          gRPC学习 2 开始使用gRPC
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-16 22:32:04" itemprop="dateCreated datePublished" datetime="2022-03-16T22:32:04+08:00">2022-03-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-17 00:19:27" itemprop="dateModified" datetime="2022-03-17T00:19:27+08:00">2022-03-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="学习gRPC-02-开始使用gRPC"><a href="#学习gRPC-02-开始使用gRPC" class="headerlink" title="学习gRPC 02 开始使用gRPC"></a>学习gRPC 02 开始使用gRPC</h1><p>为什么要把这部分的内容作为文档保留下来，因为学习的过程中需要一些实践或者总结输出来巩固自己的记忆。就像我在周末刚刚完成书中第二章的实践，仅仅过去两天多，这部分内容和实践过程就已经被我忘的七七八八了。所以很多时候留存一个真实的文档一个重要的目的是在留存文档的过程中重新审视自己在实践中遇到的问题和坑，达到温故而知新的效果。</p>
+<p>好，接下来是正文的内容</p>
+<p>我们这次实验的目录形式大致如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"> hallwood@thinkpadt480s  ~/Code/tmp/protoLearning20220313 $ tree ./</span><br><span class="line">./</span><br><span class="line">├── ecommerce_proto_files</span><br><span class="line">│   └── product_info.proto</span><br><span class="line">└── productinfo</span><br><span class="line">    ├── client</span><br><span class="line">    │   ├── ecommerce</span><br><span class="line">    │   │   └── product_info.pb.go</span><br><span class="line">    │   ├── go.mod</span><br><span class="line">    │   ├── go.sum</span><br><span class="line">    │   └── productinfo_client.go</span><br><span class="line">    └── service</span><br><span class="line">        ├── ecommerce</span><br><span class="line">        │   └── product_info.pb.go</span><br><span class="line">        ├── go.mod</span><br><span class="line">        ├── go.sum</span><br><span class="line">        ├── main.go</span><br><span class="line">        └── productinfo_service.go</span><br><span class="line"></span><br><span class="line">6 directories, 10 files</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>在实验开始之前，我们假设你的文件夹是干净的，实验完成之后会渐渐充实成上述的内容</p>
+<p>先将当前目录记录为fakeroot</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ export FAKEROOT=$PWD</span><br></pre></td></tr></table></figure>
+
+<h2 id="首先，要定义服务内容"><a href="#首先，要定义服务内容" class="headerlink" title="首先，要定义服务内容"></a>首先，要定义服务内容</h2><p>我们需要简单知道我们要实现一个什么样的微服务，先假定我们需要一个产品信息的微服务，这个产品信息需要具有以下属性</p>
+<ul>
+<li>id 用来表明这个产品的唯一标识</li>
+<li>name 用来表明这个产品的名称</li>
+<li>description 产品描述</li>
+<li>price 价格</li>
+</ul>
+<p>所以，我们定义出了一种message类型</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">message </span><span class="title class_">Product</span> &#123;</span><br><span class="line">    <span class="type">string</span> id = <span class="number">1</span>;</span><br><span class="line">    <span class="type">string</span> name = <span class="number">2</span>;</span><br><span class="line">    <span class="type">string</span> description = <span class="number">3</span>;</span><br><span class="line">    <span class="type">float</span> price = <span class="number">4</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们再定义一种类型，封装产品的唯一标志</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">message </span><span class="title class_">ProductID</span> &#123;</span><br><span class="line">    <span class="type">string</span> value = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>定义完了message类型，接下来要定义交互的服务</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">service </span><span class="title class_">ProductInfo</span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> addProduct(Product) <span class="keyword">returns</span> (ProductID)</span>;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> getProduct(ProductID) <span class="keyword">returns</span> (Product)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于这一次实验只是实现一个简单的demo，所以在服务定义方面只做一个简单的getter和setter</p>
+<p>完整的proto文件内容如下</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">syntax = <span class="string">&quot;proto3&quot;</span>;</span><br><span class="line"><span class="keyword">package</span> ecommerce;</span><br><span class="line"><span class="keyword">option</span> go_package = <span class="string">&quot;/ecommerce&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">message </span><span class="title class_">Product</span> &#123;</span><br><span class="line">    <span class="type">string</span> id = <span class="number">1</span>;</span><br><span class="line">    <span class="type">string</span> name = <span class="number">2</span>;</span><br><span class="line">    <span class="type">string</span> description = <span class="number">3</span>;</span><br><span class="line">    <span class="type">float</span> price = <span class="number">4</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">message </span><span class="title class_">ProductID</span> &#123;</span><br><span class="line">    <span class="type">string</span> value = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">service </span><span class="title class_">ProductInfo</span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> addProduct(Product) <span class="keyword">returns</span> (ProductID)</span>;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> getProduct(ProductID) <span class="keyword">returns</span> (Product)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，由于我们在实践过程中使用golang实现，在最新版本的protoc-gen-go插件中要求proto中定义go_pacakge，这里我们定义成ecomerce 然后编译要求前面必须有斜杠</p>
+<p>接下来我们就将上述内容写到product_info.proto里面</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cd $FAKEROOT</span><br><span class="line">$ mkdir -p ./ecommerce_proto_files</span><br><span class="line">$ vim ./ecommerce_proto_files/product_info.proto # 在vim 中写下上述对应的内容</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装golang-gRPC插件"><a href="#安装golang-gRPC插件" class="headerlink" title="安装golang gRPC插件"></a>安装golang gRPC插件</h2><p>首先，需要安装protobuf的lib<br>以manjaro linux为例子</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">$ sudo pacman -S protobuf</span><br><span class="line">resolving dependencies...</span><br><span class="line">looking for conflicting packages...</span><br><span class="line"></span><br><span class="line">Packages (1) protobuf-3.19.4-1</span><br><span class="line"></span><br><span class="line">Total Installed Size:  8.78 MiB</span><br><span class="line"></span><br><span class="line">:: Proceed with installation? [Y/n] y</span><br><span class="line">(1/1) checking keys in keyring                     [##] 100%</span><br><span class="line">(1/1) checking package integrity                   [##] 100%</span><br><span class="line">(1/1) loading package files                        [##] 100%</span><br><span class="line">(1/1) checking for file conflicts                  [##] 100%</span><br><span class="line">(1/1) checking available disk space                [##] 100%</span><br><span class="line">:: Processing package changes...</span><br><span class="line">(1/1) reinstalling protobuf                        [##] 100%</span><br><span class="line">:: Running post-transaction hooks...</span><br><span class="line">(1/1) Arming ConditionNeedsUpdate...</span><br><span class="line">$ protoc --version</span><br><span class="line">libprotoc 3.19.4</span><br></pre></td></tr></table></figure>
+
+<p>最后如果能够正常调用protoc命令并且展示出他的版本的时候，说明基本的protoc库安装好了</p>
+<p>如果你在CN，那么由于一些众所周知的原因，你在执行go get的时候应该无法顺畅的执行，这时候你需要设置一下镜像代理，具体方法见链接<a target="_blank" rel="noopener" href="https://goproxy.cn/">goproxy.cn</a></p>
+<p>安装grpc相关模块的go代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">go get -u google.golang.org/grpc</span><br><span class="line">go get -u github.com/golang/protobuf/proto-gen-go</span><br></pre></td></tr></table></figure>
+
+<h2 id="完成server端代码编码"><a href="#完成server端代码编码" class="headerlink" title="完成server端代码编码"></a>完成server端代码编码</h2><p>首先创建productinfo文件夹并且初始化service module</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ cd $FAKEROOT</span><br><span class="line">$ mkdir -p ./productinfo/service</span><br><span class="line">$ cd ./productinfo/service</span><br><span class="line">$ go mod init productinfo/service</span><br></pre></td></tr></table></figure>
+<p>好了，现在简单的go module 就初始化好了</p>
+<p>现在要在service module中使用protoc工具生成对应的golang接口代码，先回到项目根目录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ cd $FAKEROOT</span><br><span class="line">$ tree ./</span><br><span class="line">./</span><br><span class="line">├── ecommerce_proto_files</span><br><span class="line">│   └── product_info.proto</span><br><span class="line">└── productinfo</span><br><span class="line">    └── service</span><br><span class="line">        └── go.mod</span><br></pre></td></tr></table></figure>
+
+<p><strong>执行protoc命令生成golang pb交互代码</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ protoc --go_out=plugins=grpc:./productinfo/service  ecommerce_proto_files/product_info.proto</span><br></pre></td></tr></table></figure>
+
+<p>执行之后，在service模块中会生成一个新的文件夹ecommerce并且包含一个新的go代码文件product_info.pb.go</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ tree ./</span><br><span class="line">./</span><br><span class="line">├── ecommerce_proto_files</span><br><span class="line">│   └── product_info.proto</span><br><span class="line">└── productinfo</span><br><span class="line">    └── service</span><br><span class="line">        ├── ecommerce</span><br><span class="line">        │   └── product_info.pb.go</span><br><span class="line">        └── go.mod</span><br></pre></td></tr></table></figure>
+
+<p><strong>要注意，如果执行的protoc命令不是上述的命令而是下述命令的话</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ protoc --go_out=./productinfo/service  ecommerce_proto_files/product_info.proto</span><br></pre></td></tr></table></figure>
+
+<p><strong>也可以在对应的位置生成一个同名的代码文件，但是参数中少了一个重要的条件</strong><code>plugins=grpc:</code><strong>最终生成的代码文件中只会有ProductId和Product的定义，而会缺少重要的rpc server和client的接口定义，所以这个地方需指明pluging&#x3D;grpc</strong></p>
+<p>定义好了消息格式和接口之后就可以直接开始编码了</p>
+<ul>
+<li>product_info_service.go</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	pb <span class="string">&quot;productinfo/service/ecommerce&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/gofrs/uuid&quot;</span></span><br><span class="line">	<span class="string">&quot;google.golang.org/grpc/codes&quot;</span></span><br><span class="line">	<span class="string">&quot;google.golang.org/grpc/status&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> server <span class="keyword">struct</span> &#123;</span><br><span class="line">	productMap <span class="keyword">map</span>[<span class="type">string</span>]*pb.Product</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *server)</span></span> AddProduct(ctx context.Context, in *pb.Product) (*pb.ProductID, <span class="type">error</span>) &#123;</span><br><span class="line">	out, err := uuid.NewV4()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, status.Errorf(codes.Internal, <span class="string">&quot;Error while generating product Id, err: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	in.Id = out.String()</span><br><span class="line">	<span class="keyword">if</span> s.productMap == <span class="literal">nil</span> &#123;</span><br><span class="line">		s.productMap = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">string</span>]*pb.Product)</span><br><span class="line">	&#125;</span><br><span class="line">	s.productMap[in.Id] = in</span><br><span class="line">	<span class="keyword">return</span> &amp;pb.ProductID&#123;</span><br><span class="line">		Value: in.Id,</span><br><span class="line">	&#125;, <span class="literal">nil</span> <span class="comment">// status.New(codes.OK, &quot;&quot;).Err()</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *server)</span></span> GetProduct(ctx context.Context, in *pb.ProductID) (*pb.Product, <span class="type">error</span>) &#123;</span><br><span class="line">	product_id := in.Value</span><br><span class="line">	<span class="keyword">if</span> out, ok := s.productMap[product_id]; ok &#123;</span><br><span class="line">		<span class="keyword">return</span> out, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, status.Errorf(codes.NotFound, <span class="string">&quot;Product not exists, input id is %s&quot;</span>, product_id)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>main.go</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;net&quot;</span></span><br><span class="line"></span><br><span class="line">	pb <span class="string">&quot;productinfo/service/ecommerce&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;google.golang.org/grpc&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	port = <span class="string">&quot;:19999&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	lis, err := net.Listen(<span class="string">&quot;tcp&quot;</span>, port)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;failed to listen tcp port: %s, err: %v&quot;</span>, port, err)</span><br><span class="line">	&#125;</span><br><span class="line">	s := grpc.NewServer()</span><br><span class="line">	pb.RegisterProductInfoServer(s, &amp;server&#123;&#125;)</span><br><span class="line">	log.Printf(<span class="string">&quot;Start gRPC listener on port %s&quot;</span>, port)</span><br><span class="line">	<span class="keyword">if</span> err := s.Serve(lis); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Failed to serve: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>由于本篇记录的重点是如何使用grpc，go代码不做过多的讲解，直接阅读展示的源码即可，完成上述两个代码之后，目录结构如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">./</span><br><span class="line">├── ecommerce_proto_files</span><br><span class="line">│   └── product_info.proto</span><br><span class="line">└── productinfo</span><br><span class="line">    └── service</span><br><span class="line">        ├── ecommerce</span><br><span class="line">        │   └── product_info.pb.go</span><br><span class="line">        ├── go.mod</span><br><span class="line">        ├── go.sum</span><br><span class="line">        ├── main.go</span><br><span class="line">        └── productinfo_service.go</span><br></pre></td></tr></table></figure>
+
+<p>由于我使用vscode进行编码，所以go.mod和go.sum是插件自动补齐和生成的，建议读者也使用类似工具来减少工作量</p>
+<p>自此，一个监听19999 端口执行tcp的监听服务器就已经完成编码了</p>
+<h2 id="完成client端代码编码"><a href="#完成client端代码编码" class="headerlink" title="完成client端代码编码"></a>完成client端代码编码</h2><p>在完成了server端之后，如何完成客户端的编码就快捷了不少，按照下列指令一步步执行即可</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">$ cd $FAKEROOT</span><br><span class="line">$ mkdir -p ./productinfo/client</span><br><span class="line">$ cd ./productinfo/client</span><br><span class="line">$ go mod init productinfo/client</span><br><span class="line">$ cd $FAKEROOT</span><br><span class="line">$ tree ./</span><br><span class="line">./</span><br><span class="line">├── ecommerce_proto_files</span><br><span class="line">│   └── product_info.proto</span><br><span class="line">└── productinfo</span><br><span class="line">    ├── client</span><br><span class="line">    │   └── go.mod</span><br><span class="line">    └── service</span><br><span class="line">        ├── ecommerce</span><br><span class="line">        │   └── product_info.pb.go</span><br><span class="line">        ├── go.mod</span><br><span class="line">        ├── go.sum</span><br><span class="line">        ├── main.go</span><br><span class="line">        └── productinfo_service.go</span><br><span class="line">$ </span><br></pre></td></tr></table></figure>
+
+<p>自此，成功建立了一个新的go module productinfo&#x2F;client</p>
+<p>然后用protoc命令生成新的客户端代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ protoc --go_out=plugins=grpc:./productinfo/client  ecommerce_proto_files/product_info.proto</span><br></pre></td></tr></table></figure>
+
+<p>执行之后再在根目录执行tree命令查看目录结构如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ cd $FAKEROOT</span><br><span class="line">$ tree ./</span><br><span class="line">./</span><br><span class="line">├── ecommerce_proto_files</span><br><span class="line">│   └── product_info.proto</span><br><span class="line">└── productinfo</span><br><span class="line">    ├── client</span><br><span class="line">    │   ├── ecommerce</span><br><span class="line">    │   │   └── product_info.pb.go</span><br><span class="line">    │   └── go.mod</span><br><span class="line">    └── service</span><br><span class="line">        ├── ecommerce</span><br><span class="line">        │   └── product_info.pb.go</span><br><span class="line">        ├── go.mod</span><br><span class="line">        ├── go.sum</span><br><span class="line">        ├── main.go</span><br><span class="line">        └── productinfo_service.go</span><br></pre></td></tr></table></figure>
+
+<p>最后进行gRPC客户端的编码</p>
+<ul>
+<li>product_info_client.go</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;time&quot;</span></span><br><span class="line"></span><br><span class="line">	pb <span class="string">&quot;productinfo/client/ecommerce&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;google.golang.org/grpc&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	server_addr = <span class="string">&quot;localhost:19999&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	conn, err := grpc.Dial(server_addr, grpc.WithInsecure())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Failed to connect addr: %s&quot;</span>, server_addr)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> conn.Close()</span><br><span class="line">	c := pb.NewProductInfoClient(conn)</span><br><span class="line"></span><br><span class="line">	ctx, cancel := context.WithTimeout(context.Background(), time.Second)</span><br><span class="line">	<span class="keyword">defer</span> cancel()</span><br><span class="line">	new_product := &amp;pb.Product&#123;</span><br><span class="line">		Name:        <span class="string">&quot;hallwood&#x27;s lepold fc660m&quot;</span>,</span><br><span class="line">		Description: <span class="string">&quot;this is a high end mechanical keyboard, with cherry silent red switchs&quot;</span>,</span><br><span class="line">		Price:       <span class="number">829</span>,</span><br><span class="line">	&#125;</span><br><span class="line">	r, err := c.AddProduct(ctx, new_product)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Failed to add new product, err is %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">&quot;Product id is %s, add new product success&quot;</span>, r.Value)</span><br><span class="line">	product, err := c.GetProduct(ctx, r)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Failed to get product, err is %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">&quot;Product: %s&quot;</span>, product.String())</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这个客户端，简单生成了一个名为fc660m的商品存到服务端并且用服务端存储返回的id再次查询</p>
+<p>执行完上述所有步骤之后，所有的文件的排布形式应当是如下形式</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">./</span><br><span class="line">├── ecommerce_proto_files</span><br><span class="line">│   └── product_info.proto</span><br><span class="line">└── productinfo</span><br><span class="line">    ├── client</span><br><span class="line">    │   ├── ecommerce</span><br><span class="line">    │   │   └── product_info.pb.go</span><br><span class="line">    │   ├── go.mod</span><br><span class="line">    │   ├── go.sum</span><br><span class="line">    │   └── productinfo_client.go</span><br><span class="line">    └── service</span><br><span class="line">        ├── ecommerce</span><br><span class="line">        │   └── product_info.pb.go</span><br><span class="line">        ├── go.mod</span><br><span class="line">        ├── go.sum</span><br><span class="line">        ├── main.go</span><br><span class="line">        └── productinfo_service.go</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="最后进行一个简单的测试"><a href="#最后进行一个简单的测试" class="headerlink" title="最后进行一个简单的测试"></a>最后进行一个简单的测试</h2><p>首先进入服务端的go.mod所在路径执行如下命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go run ./main.go ./productinfo_service.go </span><br><span class="line">2022/03/17 00:11:09 Start gRPC listener on port :19999</span><br></pre></td></tr></table></figure>
+
+<p>然后开启一个新的会话，进入客户端的go.mod所在路径执行如下命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go run ./productinfo_client.go</span><br><span class="line">2022/03/17 00:13:36 Product id is 786b9bcb-1619-426d-b2aa-39eb94006ef8, add new product success</span><br><span class="line">2022/03/17 00:13:36 Product: id:&quot;786b9bcb-1619-426d-b2aa-39eb94006ef8&quot; name:&quot;hallwood&#x27;s lepold fc660m&quot; description:&quot;this is a high end mechanical keyboard, with cherry silent red switchs&quot; price:829</span><br></pre></td></tr></table></figure>
+
+<p>至此，所有的流程已经打通，一个简单的基于 grpc 服务端和客户端交互的demo就完成了</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/gRPC/" rel="tag"># gRPC</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/03/13/gRPC-learn-1/" rel="prev" title="gRPC学习 1 简单认识gRPC">
+      <i class="fa fa-chevron-left"></i> gRPC学习 1 简单认识gRPC
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0gRPC-02-%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8gRPC"><span class="nav-number">1.</span> <span class="nav-text">学习gRPC 02 开始使用gRPC</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A6%96%E5%85%88%EF%BC%8C%E8%A6%81%E5%AE%9A%E4%B9%89%E6%9C%8D%E5%8A%A1%E5%86%85%E5%AE%B9"><span class="nav-number">1.1.</span> <span class="nav-text">首先，要定义服务内容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85golang-gRPC%E6%8F%92%E4%BB%B6"><span class="nav-number">1.2.</span> <span class="nav-text">安装golang gRPC插件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%8C%E6%88%90server%E7%AB%AF%E4%BB%A3%E7%A0%81%E7%BC%96%E7%A0%81"><span class="nav-number">1.3.</span> <span class="nav-text">完成server端代码编码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%8C%E6%88%90client%E7%AB%AF%E4%BB%A3%E7%A0%81%E7%BC%96%E7%A0%81"><span class="nav-number">1.4.</span> <span class="nav-text">完成client端代码编码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E%E8%BF%9B%E8%A1%8C%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E6%B5%8B%E8%AF%95"><span class="nav-number">1.5.</span> <span class="nav-text">最后进行一个简单的测试</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Hall</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Hall</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
