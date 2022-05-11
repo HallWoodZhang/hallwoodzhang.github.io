@@ -20,33 +20,28 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="准备开一个学习STL代码并且自己实现的新坑啦！STL的有些内部实现还是很值得学习的，而且学会如何造一些比较基础的轮子也对进一步加深对自己所学知识的理解也是很有好处的 参考书籍是《STL源码剖析》，候捷写的，听说这本写的不错，同时我会借鉴一些Github上已经有人写出来的 微型版本 来加深我对于这些源代码的理解 再加上我自己从网上搞到一份SGI-STL的实现版本（V3.3），撸起袖子，开干 从stl">
-<meta property="og:type" content="article">
-<meta property="og:title" content="关于STL代码学习和实践(0)">
-<meta property="og:url" content="http://yoursite.com/2018/11/26/stl_analysis0/index.html">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="Hall">
+<meta property="og:url" content="http://yoursite.com/page/2/index.html">
 <meta property="og:site_name" content="Hall">
-<meta property="og:description" content="准备开一个学习STL代码并且自己实现的新坑啦！STL的有些内部实现还是很值得学习的，而且学会如何造一些比较基础的轮子也对进一步加深对自己所学知识的理解也是很有好处的 参考书籍是《STL源码剖析》，候捷写的，听说这本写的不错，同时我会借鉴一些Github上已经有人写出来的 微型版本 来加深我对于这些源代码的理解 再加上我自己从网上搞到一份SGI-STL的实现版本（V3.3），撸起袖子，开干 从stl">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2018-11-26T14:20:47.000Z">
-<meta property="article:modified_time" content="2022-03-13T10:10:45.294Z">
 <meta property="article:author" content="Hall">
-<meta property="article:tag" content="C++ and STL">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://yoursite.com/2018/11/26/stl_analysis0/">
+<link rel="canonical" href="http://yoursite.com/page/2/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : false,
-    isPost : true,
+    isHome : true,
+    isPost : false,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>关于STL代码学习和实践(0) | Hall</title>
+  <title>Hall</title>
   
 
 
@@ -145,10 +140,9 @@
         <div class="content-wrap">
           
 
-          <div class="content post posts-expand">
+          <div class="content index posts-expand">
             
-
-    
+      
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -164,9 +158,10 @@
       <meta itemprop="name" content="Hall">
     </span>
       <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          关于STL代码学习和实践(0)
-        </h1>
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/11/26/stl_analysis0/" class="post-title-link" itemprop="url">关于STL代码学习和实践(0)</a>
+        </h2>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -196,7 +191,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="准备开一个学习STL代码并且自己实现的新坑啦！"><a href="#准备开一个学习STL代码并且自己实现的新坑啦！" class="headerlink" title="准备开一个学习STL代码并且自己实现的新坑啦！"></a>准备开一个学习STL代码并且自己实现的新坑啦！</h1><p>STL的有些内部实现还是很值得学习的，而且学会如何造一些比较基础的轮子也对进一步加深对自己所学知识的理解也是很有好处的</p>
+          <h1 id="准备开一个学习STL代码并且自己实现的新坑啦！"><a href="#准备开一个学习STL代码并且自己实现的新坑啦！" class="headerlink" title="准备开一个学习STL代码并且自己实现的新坑啦！"></a>准备开一个学习STL代码并且自己实现的新坑啦！</h1><p>STL的有些内部实现还是很值得学习的，而且学会如何造一些比较基础的轮子也对进一步加深对自己所学知识的理解也是很有好处的</p>
 <p>参考书籍是《STL源码剖析》，候捷写的，听说这本写的不错，同时我会借鉴一些Github上已经有人写出来的 <a href="https://github.com/zouxiaohang/TinySTL" title="微型版本" target="_blank" rel="noopener">微型版本</a> 来加深我对于这些源代码的理解</p>
 <p>再加上我自己从网上搞到一份SGI-STL的实现版本（V3.3），撸起袖子，开干</p>
 <h1 id="从stl-config-h出发"><a href="#从stl-config-h出发" class="headerlink" title="从stl_config.h出发"></a>从stl_config.h出发</h1><p>这个代码很长，但是大部分都是考虑到不同编译器的不同的性质方面的支持来设置的，用来加强这些代码的可移植性。但是这一节的宏定义太多了，看的我头皮发麻。</p>
@@ -239,37 +234,141 @@
 <h2 id="编译环境"><a href="#编译环境" class="headerlink" title="编译环境"></a>编译环境</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> lsb_release -a</span><br><span class="line">LSB Version:    1.4</span><br><span class="line">Distributor ID: Arch</span><br><span class="line">Description:    Arch Linux</span><br><span class="line">Release:        rolling</span><br><span class="line">Codename:       n/a</span><br><span class="line"><span class="meta">$</span> gcc --version</span><br><span class="line">gcc (GCC) 8.2.1 20180831</span><br><span class="line">Copyright © 2018 Free Software Foundation, Inc.</span><br><span class="line">本程序是自由软件；请参看源代码的版权声明。本软件没有任何担保；</span><br><span class="line">包括没有适销性和某一专用目的下的适用性担保。</span><br><span class="line"><span class="meta">$</span> g++ --version</span><br><span class="line">g++ (GCC) 8.2.1 20180831</span><br><span class="line">Copyright © 2018 Free Software Foundation, Inc.</span><br><span class="line">本程序是自由软件；请参看源代码的版权声明。本软件没有任何担保；</span><br><span class="line">包括没有适销性和某一专用目的下的适用性担保。</span><br></pre></td></tr></table></figure>
 <p>由此来看，gcc的能力十分强悍，很多轮子不需要自己造</p>
 
+      
     </div>
 
     
     
     
-
       <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/C-and-STL/" rel="tag"># C++ and STL</a>
-          </div>
-
-        
-
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2018/11/25/redis-0-md/" rel="prev" title="redis(0):the installation and test of redis utils">
-      <i class="fa fa-chevron-left"></i> redis(0):the installation and test of redis utils
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2018/12/01/stl-analysis1-md/" rel="next" title="STL源码学习 1">
-      STL源码学习 1 <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
+        <div class="post-eof"></div>
       </footer>
-    
   </article>
   
   
   
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/25/redis-0-md/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Hall">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hall">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/11/25/redis-0-md/" class="post-title-link" itemprop="url">redis(0):the installation and test of redis utils</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-11-25 03:56:25" itemprop="dateCreated datePublished" datetime="2018-11-25T03:56:25+08:00">2018-11-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-13 18:10:45" itemprop="dateModified" datetime="2022-03-13T18:10:45+08:00">2022-03-13</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Linux下C-操作redis入门配置和测试"><a href="#Linux下C-操作redis入门配置和测试" class="headerlink" title="Linux下C++操作redis入门配置和测试"></a>Linux下C++操作redis入门配置和测试</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ul>
+<li>Redis、Key-Value数据库，并提供多种语言的API。基于内存这一点特性使得它速度很快，在实际项目中常用来作为缓存，队列，数据库来使用。</li>
+</ul>
+<h2 id="操作系统"><a href="#操作系统" class="headerlink" title="操作系统"></a>操作系统</h2><ul>
+<li>x86_64 Linux 4.19.2-arch1-1-ARCH</li>
+</ul>
+<h2 id="配置过程"><a href="#配置过程" class="headerlink" title="配置过程"></a>配置过程</h2><ul>
+<li><p>第一步，安装redis数据库</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pacman -S redis</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>然后，运行redis.service</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl start redis.service</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果你不知道redis进程所用的端口，你可以查看/etc/redis.conf文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat /etc/redis.conf</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>或者查看进程占用端口情况,一般默认的是6379</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ps -ef | grep redis</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>接下来，你可以下载可用的接口和源代码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/redis/hiredis</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>然后进入文件夹并进行编译</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd hiredis</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>这样你会得到一个动态链接库文件(.so)</p>
+</li>
+<li><p>你在使用这些接口的时候，你可以在和hiredis同级的文件夹中的cpp文件写</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">include "hiredis/hiredis.h"</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>之前看到网上有博客写要加extern “C”,但是我看一下hiredis.h头文件,作者已经考虑到C++的使用问题，所以其实可以不加</p>
+</li>
+<li><p>假设你在和hiredis同级的文件夹下要编译的文件名为redis_test.cpp, 那么你编译的时候应该记得链接上libhiredis.so</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ redis_test.cpp hiredis/libhiredis.so -o redis_test.out</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>你还可以手动建立/usr/include/hiredis 和/usr/lib/hiredis文件夹，然后分别把hiredis.h和libhiredis.so移动到二者下面</p>
+</li>
+<li><p>这样的话当前版本的hiredis接口就是全局可用的，但是每次编译的时候貌似还是要带上”-lhiredis”参数</p>
+</li>
+<li><p>在Archlinux中，你可以用pacman直接安装hiredis</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pacman -S hiredis</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>然后直接编译测试代码就好了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ redis_test.cpp -o redis_test -lhiredis</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>跑一下这个编译之后的可执行程序</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> ./redis_test</span><br><span class="line">test finished</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="代码部分"><a href="#代码部分" class="headerlink" title="代码部分"></a>代码部分</h2><ul>
+<li>这段代码意思还是挺直白的，就是建立一个链接，发送一个命令，然后看回复的类型，然后释放链接</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;hiredis/hiredis.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">cout</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">cin</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// compile parameter: -lhiredis</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span> </span>&#123;</span><br><span class="line">    redisContext* context = redisConnect(<span class="string">"127.0.0.1"</span>, <span class="number">6379</span>);</span><br><span class="line">    <span class="keyword">if</span>(!context || context-&gt;err) &#123;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; context-&gt;errstr &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span>* cmd = <span class="string">"redis demo"</span>;</span><br><span class="line">    redisReply* reply = (redisReply*) redisCommand(context, cmd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(!reply) &#123;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; <span class="string">"error"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">        redisFree(context);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(reply-&gt;type == REDIS_REPLY_STATUS)</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; <span class="string">"the status of the context reply is "</span> &lt;&lt; reply-&gt;str &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">"test finished"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    freeReplyObject(reply);</span><br><span class="line">    redisFree(context);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+
+  
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+  </nav>
 
 
 
@@ -321,7 +420,6 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%A6%E4%B9%A0STL%E4%BB%A3%E7%A0%81%E5%B9%B6%E4%B8%94%E8%87%AA%E5%B7%B1%E5%AE%9E%E7%8E%B0%E7%9A%84%E6%96%B0%E5%9D%91%E5%95%A6%EF%BC%81"><span class="nav-number">1.</span> <span class="nav-text">准备开一个学习STL代码并且自己实现的新坑啦！</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8Estl-config-h%E5%87%BA%E5%8F%91"><span class="nav-number">2.</span> <span class="nav-text">从stl_config.h出发</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#stl-config-h%E5%85%A8%E6%96%87"><span class="nav-number">3.</span> <span class="nav-text">stl_config.h全文</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95stl-config-h%E4%B8%AD%E7%9A%84%E5%AE%8F%E9%80%89%E9%A1%B9"><span class="nav-number">4.</span> <span class="nav-text">测试stl_config.h中的宏选项</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E4%BB%A3%E7%A0%81"><span class="nav-number">4.1.</span> <span class="nav-text">测试代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C"><span class="nav-number">4.2.</span> <span class="nav-text">运行输出结果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83"><span class="nav-number">4.3.</span> <span class="nav-text">编译环境</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

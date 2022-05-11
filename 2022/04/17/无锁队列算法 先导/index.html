@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="无锁队列算法先聊聊应用场景我们现在工作中需要在客户终端部署一个和云端服务器交互的媒介组件，由于客户内网服务器中的很多进程需要使用这些服务，所以开发了一个汇集了所有云端接口访问的一个中间件，并且通过共享内存环和调用服务方进行交互。 讲完了这个简单的场景，那么现在需要先解决一个算法上的问题： 提高性能，如何实现单一消费者（在这个场景中就是远端对接组件，共享内存的消费方）以及多个消费者的高效交互。 这时">
+<meta property="og:type" content="article">
+<meta property="og:title" content="无锁队列算法 先导">
+<meta property="og:url" content="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95%20%E5%85%88%E5%AF%BC/index.html">
+<meta property="og:site_name" content="Hall">
+<meta property="og:description" content="无锁队列算法先聊聊应用场景我们现在工作中需要在客户终端部署一个和云端服务器交互的媒介组件，由于客户内网服务器中的很多进程需要使用这些服务，所以开发了一个汇集了所有云端接口访问的一个中间件，并且通过共享内存环和调用服务方进行交互。 讲完了这个简单的场景，那么现在需要先解决一个算法上的问题： 提高性能，如何实现单一消费者（在这个场景中就是远端对接组件，共享内存的消费方）以及多个消费者的高效交互。 这时">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAMAAADZGHTAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABPlBMVEUAAAADAwQEBAUDAwQEBAUDAwMCAgMEBAUCAgICAgIEBAUCAgMEBAQICAkLCw4NDREjIysbGyEODhISEhcXFx1CQlI1NUIpKTMODhERERYWFhw/P08yMj8nJzEFBQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABISFqGhqdCQlI6OkkQEBQzM0AUFBkrKzYZGSAgIChubonMzP9jY3xZWW9OTmIeHiYnJzAwMDxpaYPCwvNfX3dVVWpLS14dHSQlJS4uLjoAAAADAwQDAwMBAQH////0oLsCAAAAS3RSTlMAxvP7+fv6+vr5+/n82v7+/v7+/v7+/v7+/v7+/v7XLzo7XFBaU1dVizUf5s8BEyW+9GhUokHr3g4D1v2bePXlEunHM4nUsINzfMWAuOuUAAAAAWJLR0RpvGvEtAAAAAd0SU1FB+EICBAUBNHtsZUAAAFGSURBVGje7ZlXT0IxGIbBvRD3lnNkulFBxYlileVW3Lir/v9fIMYrTc5bc25M6fvcNU968SRNv6T1eAghhBBCCCHa4q3B1NZhX6/wDY3YNyl8cwv2rW2KAK9juq+4D2k/wN5/iP3RMfYnp9ifdWB/3ol90eecXrqAdF1i332Ffc819je92N/2YX/Xj32J6UxnOtOZznSmM53pTGd61aSX7yEDD9gPPmI/9IT98zD2LyPYv45iX3ZOD0jMm8K/K/yH/GcCjumW/ZOxX+tgyIaEI9hHY9jHothHwtiHgtjb1p9fbcYnTH2vmpyantE6YDbuduecnF/QOj2RdLlxcUnK5ZSJ6SurlStxbd3E9I3Nr3GQjpuXvrX9PQoz5qXvCCF294TIpsw78BWSCb2nM9Ndpecsrcm5T88XNCfPL2RCCCGEEEKqh0+DACz7FQ3mlAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0wOC0wOFQxNjoyMDowNCswMDowMPTbQDwAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMDgtMDhUMTY6MjA6MDQrMDA6MDCFhviAAAAAAElFTkSuQmCC">
+<meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH2wQHAzEy0LYwXgAAAxZJREFUeJzt3M+LG3UYx/H3TlKhsHWrpbYurbXSXqTagnuyp0IQFC89LEgR6UHFQ/EkZZdaitAfCwWlFy+99LIivYse/BMqgopeqotYWvHg1mzAze7kOz0k0qUIdrLJPJV5vyAkGXjyeQh5mMl3MgFJkiRJkiRJkiRJkiRJkiRJkh4tE2ULsiz7LqX0QrO5pTOOhv5LSr3JlBJR+b1ePlkURVh+nq9PAubXOD/Lsu9TSi+WqSs96M3mY7cPHDj09MmTc2VLR+Ls2TfZtWsvp05dCsk/c+YE27ZtZ27u05D8+fk3mJp6Miz/3Lm36PV6nD+/GJbf7a6ysHA9JP/ChXdZWbkbln/t2gI3b/5wJ8/XpsvUNcsGNRqNTqs1S6s1W7Z0JC5efK9otWYnovIvX36/OHbseFj+lSunOXr01bD3/+rVjzh48HBo/s6de4pWa7b0TmoUFhc/JqVeWP6tWz+ztPRTJ8/L1WXjaUfSo8RBl2rAQZdqwEGv0MzMBDMzIV/tVHMOeoVu3CiiW1BNOehSDTjoUg046FINOOgV+mchzgU5Va30L+M0PBfjFMU9ulQDDrpUA0McuhdZu71Mu708+m4eQko9IvPzPA/NX19fC81fW+uG53c6fwXmr9Ltrobl93OL0jvoYa5HX04pbS9bNypZ1iClXlQ8WZaRUgrLl7Isu5tSeqJMzTDLv88DW4eo25i5mVWpfcDfwB+beI3N2AusA78H5U8DKTB/N/2vfLcD87cAvwXlP0X/8/9rUD70P/8/BuY/lOvAy9FNSBqfZ4A7wLcMdzQh/d/tBg5FNzFuX9M/bF8B3g7uRYpwAqj8f7iqPL32CnBk8HgSmB/cSxqzqga9AXwC7Niwbd9gm6Qxq2rQPwD2P7CtAbwGPFdRD1JtVTHoO4AP+fdTctPAlxX0INVaFRe1PAt8Dvw5eP468Av3zwNOAY8D7Qp6kWqpikH/Bnhnw/M9wBfAZxVkS8KLWqRaiLoefT/wUlC2FOnBRelKRAz6EnB8cJPq6KvoBiRJkiRJkiRJkiRJkiRJkiRJinYPfBvpK76naVsAAAAASUVORK5CYII=">
+<meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAAED0lEQVR4nO3cb2hVdRzH8bfnzg1la7aLuoa2DEeQ9odle5APbHi5UPTEYDAkRKjGcNKjzP3JP6m7zYTEBxNBBJMWQ5+0B1GMovUoEGewwih0Y2voWK3d/cF27z3nd3uwVUOCPHe752eczwvG7j3wvZ8v4345v3PP/Q1ERERERERERERERERERERERERERERERB4sK/wWOI4zYIx5qqBg5Ww+GvovxnjFxhhs5XueW5zNZq3lu26mGFB+iPMdx/neGPO0nzrfg15QUHh78+atj+zd2+y3dFkcOvQa69dvZP/+963kt7XtpqRkDc3NZ63kt7TUU1paZi3/yJE9eJ7HiRNd1vJTqTk6Oi5byW9vb2BmJmkt/+LFDm7e/OGO66Yr/NQV+A2KRCKzsVgdsVid39JlkUg0ZmOxuhW28k+deitbW7vLWv6ZM++wfftL1v7+58+/R1XVM1bz167dkI3F6nyfpJZDV9eHGONZyx8dvcXQ0I+zruuvzslPOyLyINGgi4SABl0kBDToIiHg+8M4yc3ExBidnW309/fR03PLSg9Xr35Fb283xngUFa3i4MHOQPOHh3+iq+s0nueSyaQ4evQjHEfnmiBo0AMSjZZz+PAFGhpetNZDTc1Oamp2AtDUFOfu3RlWry4JLL+y8glaW88BcODAqySTv1FWti6w/DDToIdQX9+nbNnyfKBD/pdr176mp+cCjhPRkAdI66aQuXLlLIODN9i3r91K/rZttRw//jHRaDkDA99a6SGMNOgBSadTJBKNjIz8TCLRyPj4aOA99PZ2c+nSB4yNjZBINDI1NRFo/vXr33DyZBPHjr1OMvkrVVW+vsUpS6Cle0AKC4tobT339zWqDfF4PfF4vbX86uodVFfvsJYfZjqji4SABl0kBHJYumed6elJpqcnl7+b+2CMh81813Wt5mcyaav56XTKev7s7JTF/DlSqTlr+fO5Wd8n6Fz2o08aY9b4rVsujhPBGM9WPI7jYIyxli/iOE7SGPOwn5pctto9CazKoW5xZnYJ9ZXAH8D4El5jKTYCGWDMUn4FYCzmlzN/yXfbYv5K4BdL+euYf/8PW8qH+ff/DYv59+Uy8ILtJkQkfx4F7gDfkdtqQuT/rhzYaruJfPuS+WX7DPCG5V5EbNgNBP5/uIK8vRYHnl14XAy0LPwWkTwLatAjwGkguuhY5cIxEcmzoAb9bWDTPcciwMvA4wH1IBJaQQx6FHiXf78lVwF8HkAPIqEWxKaWx4Bu4PeF568Ag/xzH7AUeAiYDqAXkVAKYtD7gTcXPd8AfAZ8EkC2iKBNLSKhYGs/+ibgOUvZIjbd+6F0IGwM+hCwa+FHJIy+sN2AiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIhtfwJR60YLmg6u9QAAAABJRU5ErkJggg==">
+<meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAADmUlEQVR4nO3cT2gcZRjH8e87s7spSchhDV1qLGtaDCqGXlYqHkqlIQeNB20LhYI99BAxFFrBBkEQC01rrS2lFEpPVm9FKNiDp0rswUOJFfHgH0REUYtHia3Z2ZnXw6YQiofMZDNP5f19YA67y7u/h2UfZt7ZfV8QEREREREREREREREREREREREREREREXmwuLwD4rjyhXNufD2KWQ3v/QbnXAa0bfKzDc5FZvlZlvVFUQSwZJOf9kVRbJlfi6I4Av6xyc9qUeRicHct8gG899+kaefZPGMqeUOq1erwzp0vDe7Y8WLeoT1x/Pi03759ojIxsbdmkX/ixGt+fPyZytTUKyb5p04dYuvWp9i9e7pqkX/mzOs0GpvZv/+ISf7582/S3z/gDx58a9Ai/9Kld0iSJT8zM2eSf+PGNebnrw6naSfXuNyNDjA2to3JyX1Fhq7ZyZMzjI4+aZZ/+vRhms0xs/xz5476kZEtzir/4sW3aTQe8ZOT+3JfDfbC5cvvMjRUN/v8r1y5wNLSXbP827d/YX7+au5x0TrUIiIPGDW6SADU6FKqVsvRajmmpppcv/6xdTnBKDRHFylqYcHjvefWrc+Znd3Lrl17rEsKgs7oUjrnHHFcoV7faF1KMHRGl9K1Wo5arY9jxz6yLiUYOqNL6W7eTDl79hpzc9PWpQRDZ3QpVavlcM5Rrzc4cGDWupxgqNGlVAsL3rqEIOnSXSQAanSRAKjRRQJQaI6eJG3u3FnsdS2r5Ol0ErN87+3z07RjmJ+RpqlZfpbZ52dZZpafJMVWR+degVSt1r5NkvbjhdJ6II4r5F2i19v8mDRNzfKdc3ivG1ohq1Zr3yVJ+4k8Y4osNdwGDBQYtzJzLd/ULcAi8Oca3mMtHqW76cIfRvmbgQz4zSh/hO6U71ej/E1AH/CzUf5GYBD4ySgf4G/ga8P8VXkPeNq6CBFZP03gd+Aril1NiPzfPQQ8Zl3EevuM7mX7IvCqcS0iFvYAH5YdWubPa88B9zaVHACOAkMl5osEq6xGj4ELwPCK55rA+yXliwStrEZ/g25j35/9PAHMV0SsldHodeAI0P8frz2MwXxFJDRlrF4bBT5Y8fgF4Efg++XHbbpz9b9KqEUkSGU0+pfLxz2bgE8A7QwoUhItahEJgNXGE026f6UVCc39N6VLYdHoPwAvLx8iIfrUugAREREREREREREREREREREREREREREREWv/AudC6d2T9CnNAAAAAElFTkSuQmCC">
+<meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAMAAADZGHTAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAACB1BMVEUAAAADAwQEBAUDAwQEBAUDAwMCAgMEBAUCAgICAgIEBAUCAgMEBAQICAkLCw4NDREjIysbGyEODhISEhcXFx1CQlI1NUIpKTMODhERERYWFhw/P08yMj8nJzEFBQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABISFqGhqdCQlI6OkkQEBQzM0AUFBkrKzYZGSAgIChubonMzP9jY3xZWW9OTmIeHiYnJzAwMDy6uug9PUwICAoAAAAPDxN+fp0NDRAbGyKgoMgYGB6JiauurtoCAgNGRlc5OUe+vu1vb4tRUWWiossKCgycnMOdncTLy/6Zmb8ODhIpKTOWlrwiIiojIyxgYHgJCQtGRlgKCg2qqtQSEheQkLRHR1liYnuvr9vKyvwFBQaKiq2bm8IGBgeIiKpCQlNuborJyfuMjK8vLztpaYNVVWoODhE3N0XKyv2VlboBAQGfn8caGiEMDA9ra4YiIiuamsALCw4HBwk8PEsTExhtbYgCAgIcHCOOjrLCwvNfX3dLS14dHSQlJS4uLjoDAwQDAwP///+Z/x/0AAAAS3RSTlMAxvP7+fv6+vr5+/n82v7+/v7+/v7+/v7+/v7+/v7XLzo7XFBaU1dVizUf5s8BEyW+9GhUokHr3g4D1v2bePXlEunHM4nUsINzfMWAuOuUAAAAAWJLR0SsV2XyiwAAAAd0SU1FB+EIBxY2Ivi8HqwAAAIrSURBVGje7ZnXUxNRGEcpgiAgIiBgIaFXRQSRIkpZFAgaKaEo6JUgXcNGmsEQkA5KaKGJXRDhnySML4iT33Xui7Pud952ztyZPXPbzK6bG0EQBEEQBEEQisXdA+N5Ansvjvc+ib0Px/uewt7PnxPg7jI9QFcBOX0P+8D72OsfYF9ZhX31GexrgrDXBbhON9RCztZhH1yPfUgD9g9DsX90DvvGMOwNlE7pIL3p8ROG0hljT1F6s17fjNINxpZnMJ2x1jaY3t4B050vyMTSO7u6ObP+/AVKN5pMRpTeI5sb8ay/7NXDdB3D6cKz3mfmLfj+AZQ+aDK9QumWoddWzoKXB1H6sI2Tbm0ZEUvvGR16A9PHbOMovW1iYhLv9ak+nM6mZ1D67BxOr337rlIsfd4sW2G6fQEec0ZZXoTp3UudOH15ZRGlO47t5T/Sx0cE01fX1jdg+uZ7mG7Z2rKgdPbhYxM+5hyfPuMTnrPgv3z9RpcbpVM6pR9Nt3+HhG9jH7GA/fkd7H9cwH73IvY/L2Fvd50eyTB7HL/P8Q72j4l0ma7R/k7UsefoGC0kNg77+ATsE+Kxj4vFPiYae63mr7/aJCap9XtVckrqZUUHXEkTHXmVpV9TdHpGpuDA61mM3chWY3pOrvNIzLupxvT8W4fXwe009aUXFP66CovUl14sSVLJHUm6m62+Be8kM0PZtzOlC6WXahRNqXh6WbnCKaNfyARBEARBEATx/3AAJRt0vv4uu6MAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTctMDgtMDdUMjI6NTQ6MzQrMDA6MDBottpRAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE3LTA4LTA3VDIyOjU0OjM0KzAwOjAwGeti7QAAAABJRU5ErkJggg==">
+<meta property="og:image" content="data:image/png;base64,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">
+<meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH2QcSChYB192k1AAABNtJREFUeJzt3G1IVXcAx/Gv59rYwFbWKnt0jXozWhvsDkHfdPM6WPgml1vJaDG3zCa5wYikRWSZNcdGvliBDz3Ruolvt/kwGGwIG9wRzdigR1b24ARrKi313nP24mpJDNY1/f+L8/vAxXsv/P3+vd4/53jOPYKIiIiIiIiIiIiIiIiIiIiIiIiIiIiIyOMlJdkBjuP85rruS6mpUwYmY0L/x3Xjaa7rYqsfj8fSPM+z1o/FhtMA9X3cdxyn03Xd5cmMS3qhp6Y+dX3JkmVzN2zYluzQCbFjxzvMmbOQsrJqK/3t24uYOnU627Z9ZaVfUbGWadNmWOvv3LmeeDzOnj0nrPUHB++yb1+TlX5V1Ub6+29b6x85so8LF87eiMWG5iUzLjXZUCAQGAiHCwmHC5MdOiH27t3khcOFKbb6NTVbvFBotbX+gQNbycl5w9rrX1e3i6VLX7banzVrgRcOFya9kZoIJ058gevGrfW7ui5y+fIfA7FYcuOcyZmOiDxOtNBFfEALXcQHfLXQg8GUe7fc3OeM95ubDxIKpRMKpdPcfNB4//DhakKhdFatWsDp0z8Z7/f0XCcrawo9PdeNt+H+73/lyhlEIrVW5mBL0gfjnmTRqAfA8eOfc+XKOeP92tqtHDr0AwCbNq1kzZpSo/36+t3U1f0IwP79H3L06C9G++3tp/A8l/b2JoqKPjLaHhWNepw7d4bi4hzWrt1iZQ42+GqLPqqtLUJe3tvGuxkZi+7dnzs303h/3bpySkpWcOzYZ5w/f8Z4v6XlJEVFH9PaetJ4+0Hp6bNtT8EoX23RAa5evUB3dxfB4Arj7ZKSXRQX5wBQVWX+zV5WVk1ZWTWdnT/T0fGt0XZX10Vu3rzC5s1V5Odncu3aJebPf8HoHCCx++44DhUVh4y3bfLdFr2tLUJu7ps4TsB4u7KymIaGDhoaOqisfM94H+DOnX7q63eTlZVntNvWFqG3t5vs7Kfp7e2mtTVitD8qGvWIRDqprd1qpW+L7xZ6a2uEvLy3rLQLCjZSWppLaWkuBQUbjfeDwRRCoRkMDw8a/2RdS8tJGhs7iEY9Ghs7rO2+B4MprF//Gvn571rp2+K7XfemprPW2uXlNZSX11jrjx6MtGHs6758eTanTnUan4PNn982323RRfxIC13EB8ax6+45fX236Ou7NfGzeQiuG8dmPxaLWe0PDw9Z7Q8NDVrvDwz8bbF/l8HBu9b6ia6X9AZ6PNej33Jdd3qy4yaK4wRw3bitPI7j4Lqutb6I4zi3XddNT2bMeC61exF4ZhzjxjYf5ahIJvAP8NcjfI9HsRAYBm5a6s8DXIv9DBJ/8tn5HGuiPwW4aqk/m8T7/09LfUi8/3+32H8oTUC27UmIyORZBNwATjO+vQmRJ10GsMz2JCbb9yR22/uB9y3PRcSGIsD4/+EyeXrtdeCVkftpQMXIVxGZZKYWegD4Epg55rnMkedEZJKZWuifAIsfeC4ArALMX8Ik4jMmFvpM4FP++5TcPOA7A3MQ8TUTF7U8D0SA3pHH+cAl7p8HnAY8C/QZmIuIL5lY6L8CH4x5vAD4BvjaQFtE0EUtIr5g63r0xcCrltoiNj14UNoIGwv9MrB65CbiRy22JyAiIiIiIiIiIiIiIiIiIiIiIiIiIiIiYtu/k0ORWCvP+9oAAAAASUVORK5CYII=">
+<meta property="article:published_time" content="2022-04-17T15:45:10.000Z">
+<meta property="article:modified_time" content="2022-05-11T15:59:26.620Z">
+<meta property="article:author" content="Hall">
+<meta property="article:tag" content="algorithm">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAMAAADZGHTAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABPlBMVEUAAAADAwQEBAUDAwQEBAUDAwMCAgMEBAUCAgICAgIEBAUCAgMEBAQICAkLCw4NDREjIysbGyEODhISEhcXFx1CQlI1NUIpKTMODhERERYWFhw/P08yMj8nJzEFBQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABISFqGhqdCQlI6OkkQEBQzM0AUFBkrKzYZGSAgIChubonMzP9jY3xZWW9OTmIeHiYnJzAwMDxpaYPCwvNfX3dVVWpLS14dHSQlJS4uLjoAAAADAwQDAwMBAQH////0oLsCAAAAS3RSTlMAxvP7+fv6+vr5+/n82v7+/v7+/v7+/v7+/v7+/v7XLzo7XFBaU1dVizUf5s8BEyW+9GhUokHr3g4D1v2bePXlEunHM4nUsINzfMWAuOuUAAAAAWJLR0RpvGvEtAAAAAd0SU1FB+EICBAUBNHtsZUAAAFGSURBVGje7ZlXT0IxGIbBvRD3lnNkulFBxYlileVW3Lir/v9fIMYrTc5bc25M6fvcNU968SRNv6T1eAghhBBCCCHa4q3B1NZhX6/wDY3YNyl8cwv2rW2KAK9juq+4D2k/wN5/iP3RMfYnp9ifdWB/3ol90eecXrqAdF1i332Ffc819je92N/2YX/Xj32J6UxnOtOZznSmM53pTGd61aSX7yEDD9gPPmI/9IT98zD2LyPYv45iX3ZOD0jMm8K/K/yH/GcCjumW/ZOxX+tgyIaEI9hHY9jHothHwtiHgtjb1p9fbcYnTH2vmpyantE6YDbuduecnF/QOj2RdLlxcUnK5ZSJ6SurlStxbd3E9I3Nr3GQjpuXvrX9PQoz5qXvCCF294TIpsw78BWSCb2nM9Ndpecsrcm5T88XNCfPL2RCCCGEEEKqh0+DACz7FQ3mlAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0wOC0wOFQxNjoyMDowNCswMDowMPTbQDwAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMDgtMDhUMTY6MjA6MDQrMDA6MDCFhviAAAAAAElFTkSuQmCC">
+
+<link rel="canonical" href="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95%20%E5%85%88%E5%AF%BC/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>无锁队列算法 先导 | Hall</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hall</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">其实是一个备忘录</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95%20%E5%85%88%E5%AF%BC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Hall">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hall">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          无锁队列算法 先导
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-04-17 23:45:10" itemprop="dateCreated datePublished" datetime="2022-04-17T23:45:10+08:00">2022-04-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-11 23:59:26" itemprop="dateModified" datetime="2022-05-11T23:59:26+08:00">2022-05-11</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="无锁队列算法"><a href="#无锁队列算法" class="headerlink" title="无锁队列算法"></a>无锁队列算法</h1><h2 id="先聊聊应用场景"><a href="#先聊聊应用场景" class="headerlink" title="先聊聊应用场景"></a>先聊聊应用场景</h2><p>我们现在工作中需要在客户终端部署一个和云端服务器交互的媒介组件，由于客户内网服务器中的很多进程需要使用这些服务，所以开发了一个汇集了所有云端接口访问的一个中间件，并且通过共享内存环和调用服务方进行交互。</p>
+<p>讲完了这个简单的场景，那么现在需要先解决一个算法上的问题：</p>
+<p>提高性能，如何实现单一消费者（在这个场景中就是远端对接组件，共享内存的消费方）以及多个消费者的高效交互。</p>
+<p>这时无锁队列的算法就进入我的选型列表了<del>（当然如果客户端允许的话是不是直接用kafka比较好</del></p>
+<p>为了能够最终解决这个问题，应该先研究如何实现单生产者单消费者的无锁队列实现方式</p>
+<h1 id="算法实现思路"><a href="#算法实现思路" class="headerlink" title="算法实现思路"></a>算法实现思路</h1><h2 id="首先是环形队列"><a href="#首先是环形队列" class="headerlink" title="首先是环形队列"></a>首先是环形队列</h2><p>环形队列是很基础的数据结构，学过一点点数据结构的朋友应该能够很容易的想到一个简单的环形队列的结构是什么样的</p>
+<ol>
+<li>首先逻辑上，环形队列就是一个线性表</li>
+</ol>
+<p>因为我们这个使用场景中的线性表是需要申请整块内存的，所以直接用数组的效率最高</p>
+<ol start="2">
+<li>操作线性表，有两个游标</li>
+</ol>
+<p>一个游标readIndex标记第一个元素，一个游标writeIndex标记第一个元素的后一个元素</p>
+<p>字面理解：readIndex值向的是第一个可读元素，writeIndex指的是第一个可写空位，在这个前提下，如果对于整个线性表不容忍任何形式的容量浪费，那么当readIndex和writeIndex相同的时候，很难将这种状态理解成<strong>满</strong>还是<strong>空</strong>，当然，可以通过一个新的变量来记录是否空，但是在并发情况下，尽量减少需要修改的临界变量是基本操作，所以这里还是选择浪费一个空位用来区分满还是空</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">isEmpty</span>(<span class="params">readIndex, writeIndex</span>):</span><br><span class="line">    <span class="keyword">return</span> readIndex == writeIndex</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">isFull</span>(<span class="params">readIndex, writeIndex, capacity</span>):</span><br><span class="line">    <span class="keyword">return</span> (writeIndex + <span class="number">1</span>) % capacity == readIndex</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>下面的描述参考了wiki</p>
+</blockquote>
+<ol start="3">
+<li>工作过程</li>
+</ol>
+<p>一个圆形缓冲区最初为空并有预定的长度。例如，这是一个具有七个元素空间的圆形缓冲区，其中底部的单线与箭头表示“头尾相接”形成一个圆形地址空间</p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAMAAADZGHTAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABPlBMVEUAAAADAwQEBAUDAwQEBAUDAwMCAgMEBAUCAgICAgIEBAUCAgMEBAQICAkLCw4NDREjIysbGyEODhISEhcXFx1CQlI1NUIpKTMODhERERYWFhw/P08yMj8nJzEFBQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABISFqGhqdCQlI6OkkQEBQzM0AUFBkrKzYZGSAgIChubonMzP9jY3xZWW9OTmIeHiYnJzAwMDxpaYPCwvNfX3dVVWpLS14dHSQlJS4uLjoAAAADAwQDAwMBAQH////0oLsCAAAAS3RSTlMAxvP7+fv6+vr5+/n82v7+/v7+/v7+/v7+/v7+/v7XLzo7XFBaU1dVizUf5s8BEyW+9GhUokHr3g4D1v2bePXlEunHM4nUsINzfMWAuOuUAAAAAWJLR0RpvGvEtAAAAAd0SU1FB+EICBAUBNHtsZUAAAFGSURBVGje7ZlXT0IxGIbBvRD3lnNkulFBxYlileVW3Lir/v9fIMYrTc5bc25M6fvcNU968SRNv6T1eAghhBBCCCHa4q3B1NZhX6/wDY3YNyl8cwv2rW2KAK9juq+4D2k/wN5/iP3RMfYnp9ifdWB/3ol90eecXrqAdF1i332Ffc819je92N/2YX/Xj32J6UxnOtOZznSmM53pTGd61aSX7yEDD9gPPmI/9IT98zD2LyPYv45iX3ZOD0jMm8K/K/yH/GcCjumW/ZOxX+tgyIaEI9hHY9jHothHwtiHgtjb1p9fbcYnTH2vmpyantE6YDbuduecnF/QOj2RdLlxcUnK5ZSJ6SurlStxbd3E9I3Nr3GQjpuXvrX9PQoz5qXvCCF294TIpsw78BWSCb2nM9Ndpecsrcm5T88XNCfPL2RCCCGEEEKqh0+DACz7FQ3mlAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0wOC0wOFQxNjoyMDowNCswMDowMPTbQDwAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMDgtMDhUMTY6MjA6MDQrMDA6MDCFhviAAAAAAElFTkSuQmCC" alt="avatar"></p>
+<p>假定1被写入缓冲区中部（对于圆形缓冲区来说，最初的写入位置在哪里是无关紧要的）：</p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH2wQHAzEy0LYwXgAAAxZJREFUeJzt3M+LG3UYx/H3TlKhsHWrpbYurbXSXqTagnuyp0IQFC89LEgR6UHFQ/EkZZdaitAfCwWlFy+99LIivYse/BMqgopeqotYWvHg1mzAze7kOz0k0qUIdrLJPJV5vyAkGXjyeQh5mMl3MgFJkiRJkiRJkiRJkiRJkiRJkh4tE2ULsiz7LqX0QrO5pTOOhv5LSr3JlBJR+b1ePlkURVh+nq9PAubXOD/Lsu9TSi+WqSs96M3mY7cPHDj09MmTc2VLR+Ls2TfZtWsvp05dCsk/c+YE27ZtZ27u05D8+fk3mJp6Miz/3Lm36PV6nD+/GJbf7a6ysHA9JP/ChXdZWbkbln/t2gI3b/5wJ8/XpsvUNcsGNRqNTqs1S6s1W7Z0JC5efK9otWYnovIvX36/OHbseFj+lSunOXr01bD3/+rVjzh48HBo/s6de4pWa7b0TmoUFhc/JqVeWP6tWz+ztPRTJ8/L1WXjaUfSo8RBl2rAQZdqwEGv0MzMBDMzIV/tVHMOeoVu3CiiW1BNOehSDTjoUg046FINOOgV+mchzgU5Va30L+M0PBfjFMU9ulQDDrpUA0McuhdZu71Mu708+m4eQko9IvPzPA/NX19fC81fW+uG53c6fwXmr9Ltrobl93OL0jvoYa5HX04pbS9bNypZ1iClXlQ8WZaRUgrLl7Isu5tSeqJMzTDLv88DW4eo25i5mVWpfcDfwB+beI3N2AusA78H5U8DKTB/N/2vfLcD87cAvwXlP0X/8/9rUD70P/8/BuY/lOvAy9FNSBqfZ4A7wLcMdzQh/d/tBg5FNzFuX9M/bF8B3g7uRYpwAqj8f7iqPL32CnBk8HgSmB/cSxqzqga9AXwC7Niwbd9gm6Qxq2rQPwD2P7CtAbwGPFdRD1JtVTHoO4AP+fdTctPAlxX0INVaFRe1PAt8Dvw5eP468Av3zwNOAY8D7Qp6kWqpikH/Bnhnw/M9wBfAZxVkS8KLWqRaiLoefT/wUlC2FOnBRelKRAz6EnB8cJPq6KvoBiRJkiRJkiRJkiRJkiRJkiRJinYPfBvpK76naVsAAAAASUVORK5CYII=" alt="avatar"></p>
+<p>再写入2个元素，分别是2 &amp; 3 — 被追加在1之后：</p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAAED0lEQVR4nO3cb2hVdRzH8bfnzg1la7aLuoa2DEeQ9odle5APbHi5UPTEYDAkRKjGcNKjzP3JP6m7zYTEBxNBBJMWQ5+0B1GMovUoEGewwih0Y2voWK3d/cF27z3nd3uwVUOCPHe752eczwvG7j3wvZ8v4345v3PP/Q1ERERERERERERERERERERERERERERERB4sK/wWOI4zYIx5qqBg5Ww+GvovxnjFxhhs5XueW5zNZq3lu26mGFB+iPMdx/neGPO0nzrfg15QUHh78+atj+zd2+y3dFkcOvQa69dvZP/+963kt7XtpqRkDc3NZ63kt7TUU1paZi3/yJE9eJ7HiRNd1vJTqTk6Oi5byW9vb2BmJmkt/+LFDm7e/OGO66Yr/NQV+A2KRCKzsVgdsVid39JlkUg0ZmOxuhW28k+deitbW7vLWv6ZM++wfftL1v7+58+/R1XVM1bz167dkI3F6nyfpJZDV9eHGONZyx8dvcXQ0I+zruuvzslPOyLyINGgi4SABl0kBDToIiHg+8M4yc3ExBidnW309/fR03PLSg9Xr35Fb283xngUFa3i4MHOQPOHh3+iq+s0nueSyaQ4evQjHEfnmiBo0AMSjZZz+PAFGhpetNZDTc1Oamp2AtDUFOfu3RlWry4JLL+y8glaW88BcODAqySTv1FWti6w/DDToIdQX9+nbNnyfKBD/pdr176mp+cCjhPRkAdI66aQuXLlLIODN9i3r91K/rZttRw//jHRaDkDA99a6SGMNOgBSadTJBKNjIz8TCLRyPj4aOA99PZ2c+nSB4yNjZBINDI1NRFo/vXr33DyZBPHjr1OMvkrVVW+vsUpS6Cle0AKC4tobT339zWqDfF4PfF4vbX86uodVFfvsJYfZjqji4SABl0kBHJYumed6elJpqcnl7+b+2CMh81813Wt5mcyaav56XTKev7s7JTF/DlSqTlr+fO5Wd8n6Fz2o08aY9b4rVsujhPBGM9WPI7jYIyxli/iOE7SGPOwn5pctto9CazKoW5xZnYJ9ZXAH8D4El5jKTYCGWDMUn4FYCzmlzN/yXfbYv5K4BdL+euYf/8PW8qH+ff/DYv59+Uy8ILtJkQkfx4F7gDfkdtqQuT/rhzYaruJfPuS+WX7DPCG5V5EbNgNBP5/uIK8vRYHnl14XAy0LPwWkTwLatAjwGkguuhY5cIxEcmzoAb9bWDTPcciwMvA4wH1IBJaQQx6FHiXf78lVwF8HkAPIqEWxKaWx4Bu4PeF568Ag/xzH7AUeAiYDqAXkVAKYtD7gTcXPd8AfAZ8EkC2iKBNLSKhYGs/+ibgOUvZIjbd+6F0IGwM+hCwa+FHJIy+sN2AiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIhtfwJR60YLmg6u9QAAAABJRU5ErkJggg==" alt="avatar"></p>
+<p>如果两个元素被处理，那么是缓冲区中最老的两个元素被移除。在本例中，1 &amp; 2被移除，缓冲区中只剩下3:</p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAADmUlEQVR4nO3cT2gcZRjH8e87s7spSchhDV1qLGtaDCqGXlYqHkqlIQeNB20LhYI99BAxFFrBBkEQC01rrS2lFEpPVm9FKNiDp0rswUOJFfHgH0REUYtHia3Z2ZnXw6YQiofMZDNP5f19YA67y7u/h2UfZt7ZfV8QEREREREREREREREREREREREREREREXmwuLwD4rjyhXNufD2KWQ3v/QbnXAa0bfKzDc5FZvlZlvVFUQSwZJOf9kVRbJlfi6I4Av6xyc9qUeRicHct8gG899+kaefZPGMqeUOq1erwzp0vDe7Y8WLeoT1x/Pi03759ojIxsbdmkX/ixGt+fPyZytTUKyb5p04dYuvWp9i9e7pqkX/mzOs0GpvZv/+ISf7582/S3z/gDx58a9Ai/9Kld0iSJT8zM2eSf+PGNebnrw6naSfXuNyNDjA2to3JyX1Fhq7ZyZMzjI4+aZZ/+vRhms0xs/xz5476kZEtzir/4sW3aTQe8ZOT+3JfDfbC5cvvMjRUN/v8r1y5wNLSXbP827d/YX7+au5x0TrUIiIPGDW6SADU6FKqVsvRajmmpppcv/6xdTnBKDRHFylqYcHjvefWrc+Znd3Lrl17rEsKgs7oUjrnHHFcoV7faF1KMHRGl9K1Wo5arY9jxz6yLiUYOqNL6W7eTDl79hpzc9PWpQRDZ3QpVavlcM5Rrzc4cGDWupxgqNGlVAsL3rqEIOnSXSQAanSRAKjRRQJQaI6eJG3u3FnsdS2r5Ol0ErN87+3z07RjmJ+RpqlZfpbZ52dZZpafJMVWR+degVSt1r5NkvbjhdJ6II4r5F2i19v8mDRNzfKdc3ivG1ohq1Zr3yVJ+4k8Y4osNdwGDBQYtzJzLd/ULcAi8Oca3mMtHqW76cIfRvmbgQz4zSh/hO6U71ej/E1AH/CzUf5GYBD4ySgf4G/ga8P8VXkPeNq6CBFZP03gd+Aril1NiPzfPQQ8Zl3EevuM7mX7IvCqcS0iFvYAH5YdWubPa88B9zaVHACOAkMl5osEq6xGj4ELwPCK55rA+yXliwStrEZ/g25j35/9PAHMV0SsldHodeAI0P8frz2MwXxFJDRlrF4bBT5Y8fgF4Efg++XHbbpz9b9KqEUkSGU0+pfLxz2bgE8A7QwoUhItahEJgNXGE026f6UVCc39N6VLYdHoPwAvLx8iIfrUugAREREREREREREREREREREREREREREREWv/AudC6d2T9CnNAAAAAElFTkSuQmCC" alt="avatar"></p>
+<p>如果缓冲区中有7个元素，则是满的：</p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAMAAADZGHTAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAACB1BMVEUAAAADAwQEBAUDAwQEBAUDAwMCAgMEBAUCAgICAgIEBAUCAgMEBAQICAkLCw4NDREjIysbGyEODhISEhcXFx1CQlI1NUIpKTMODhERERYWFhw/P08yMj8nJzEFBQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABISFqGhqdCQlI6OkkQEBQzM0AUFBkrKzYZGSAgIChubonMzP9jY3xZWW9OTmIeHiYnJzAwMDy6uug9PUwICAoAAAAPDxN+fp0NDRAbGyKgoMgYGB6JiauurtoCAgNGRlc5OUe+vu1vb4tRUWWiossKCgycnMOdncTLy/6Zmb8ODhIpKTOWlrwiIiojIyxgYHgJCQtGRlgKCg2qqtQSEheQkLRHR1liYnuvr9vKyvwFBQaKiq2bm8IGBgeIiKpCQlNuborJyfuMjK8vLztpaYNVVWoODhE3N0XKyv2VlboBAQGfn8caGiEMDA9ra4YiIiuamsALCw4HBwk8PEsTExhtbYgCAgIcHCOOjrLCwvNfX3dLS14dHSQlJS4uLjoDAwQDAwP///+Z/x/0AAAAS3RSTlMAxvP7+fv6+vr5+/n82v7+/v7+/v7+/v7+/v7+/v7XLzo7XFBaU1dVizUf5s8BEyW+9GhUokHr3g4D1v2bePXlEunHM4nUsINzfMWAuOuUAAAAAWJLR0SsV2XyiwAAAAd0SU1FB+EIBxY2Ivi8HqwAAAIrSURBVGje7ZnXUxNRGEcpgiAgIiBgIaFXRQSRIkpZFAgaKaEo6JUgXcNGmsEQkA5KaKGJXRDhnySML4iT33Xui7Pud952ztyZPXPbzK6bG0EQBEEQBEEQisXdA+N5Ansvjvc+ib0Px/uewt7PnxPg7jI9QFcBOX0P+8D72OsfYF9ZhX31GexrgrDXBbhON9RCztZhH1yPfUgD9g9DsX90DvvGMOwNlE7pIL3p8ROG0hljT1F6s17fjNINxpZnMJ2x1jaY3t4B050vyMTSO7u6ObP+/AVKN5pMRpTeI5sb8ay/7NXDdB3D6cKz3mfmLfj+AZQ+aDK9QumWoddWzoKXB1H6sI2Tbm0ZEUvvGR16A9PHbOMovW1iYhLv9ak+nM6mZ1D67BxOr337rlIsfd4sW2G6fQEec0ZZXoTp3UudOH15ZRGlO47t5T/Sx0cE01fX1jdg+uZ7mG7Z2rKgdPbhYxM+5hyfPuMTnrPgv3z9RpcbpVM6pR9Nt3+HhG9jH7GA/fkd7H9cwH73IvY/L2Fvd50eyTB7HL/P8Q72j4l0ma7R/k7UsefoGC0kNg77+ATsE+Kxj4vFPiYae63mr7/aJCap9XtVckrqZUUHXEkTHXmVpV9TdHpGpuDA61mM3chWY3pOrvNIzLupxvT8W4fXwe009aUXFP66CovUl14sSVLJHUm6m62+Be8kM0PZtzOlC6WXahRNqXh6WbnCKaNfyARBEARBEATx/3AAJRt0vv4uu6MAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTctMDgtMDdUMjI6NTQ6MzQrMDA6MDBottpRAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE3LTA4LTA3VDIyOjU0OjM0KzAwOjAwGeti7QAAAABJRU5ErkJggg==" alt="avatar"></p>
+<p>如果缓冲区是满的，又要写入新的数据，一种策略是覆盖掉最老的数据。此例中，2个新数据— A &amp; B — 写入，覆盖了3 &amp; 4:</p>
+<p><img src="data:image/png;base64,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" alt="avatar"></p>
+<p>也可以采取其他策略，禁止覆盖缓冲区的数据，采取返回一个错误码或者抛出异常。</p>
+<p>最终，如果从缓冲区中移除2个数据，不是3 &amp; 4 而是 5 &amp; 6 。因为 A &amp; B 已经覆盖了3 &amp; 4：</p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH2QcSChYB192k1AAABNtJREFUeJzt3G1IVXcAx/Gv59rYwFbWKnt0jXozWhvsDkHfdPM6WPgml1vJaDG3zCa5wYikRWSZNcdGvliBDz3Ruolvt/kwGGwIG9wRzdigR1b24ARrKi313nP24mpJDNY1/f+L8/vAxXsv/P3+vd4/53jOPYKIiIiIiIiIiIiIiIiIiIiIiIiIiIiIyOMlJdkBjuP85rruS6mpUwYmY0L/x3Xjaa7rYqsfj8fSPM+z1o/FhtMA9X3cdxyn03Xd5cmMS3qhp6Y+dX3JkmVzN2zYluzQCbFjxzvMmbOQsrJqK/3t24uYOnU627Z9ZaVfUbGWadNmWOvv3LmeeDzOnj0nrPUHB++yb1+TlX5V1Ub6+29b6x85so8LF87eiMWG5iUzLjXZUCAQGAiHCwmHC5MdOiH27t3khcOFKbb6NTVbvFBotbX+gQNbycl5w9rrX1e3i6VLX7banzVrgRcOFya9kZoIJ058gevGrfW7ui5y+fIfA7FYcuOcyZmOiDxOtNBFfEALXcQHfLXQg8GUe7fc3OeM95ubDxIKpRMKpdPcfNB4//DhakKhdFatWsDp0z8Z7/f0XCcrawo9PdeNt+H+73/lyhlEIrVW5mBL0gfjnmTRqAfA8eOfc+XKOeP92tqtHDr0AwCbNq1kzZpSo/36+t3U1f0IwP79H3L06C9G++3tp/A8l/b2JoqKPjLaHhWNepw7d4bi4hzWrt1iZQ42+GqLPqqtLUJe3tvGuxkZi+7dnzs303h/3bpySkpWcOzYZ5w/f8Z4v6XlJEVFH9PaetJ4+0Hp6bNtT8EoX23RAa5evUB3dxfB4Arj7ZKSXRQX5wBQVWX+zV5WVk1ZWTWdnT/T0fGt0XZX10Vu3rzC5s1V5Odncu3aJebPf8HoHCCx++44DhUVh4y3bfLdFr2tLUJu7ps4TsB4u7KymIaGDhoaOqisfM94H+DOnX7q63eTlZVntNvWFqG3t5vs7Kfp7e2mtTVitD8qGvWIRDqprd1qpW+L7xZ6a2uEvLy3rLQLCjZSWppLaWkuBQUbjfeDwRRCoRkMDw8a/2RdS8tJGhs7iEY9Ghs7rO2+B4MprF//Gvn571rp2+K7XfemprPW2uXlNZSX11jrjx6MtGHs6758eTanTnUan4PNn982323RRfxIC13EB8ax6+45fX236Ou7NfGzeQiuG8dmPxaLWe0PDw9Z7Q8NDVrvDwz8bbF/l8HBu9b6ia6X9AZ6PNej33Jdd3qy4yaK4wRw3bitPI7j4Lqutb6I4zi3XddNT2bMeC61exF4ZhzjxjYf5ahIJvAP8NcjfI9HsRAYBm5a6s8DXIv9DBJ/8tn5HGuiPwW4aqk/m8T7/09LfUi8/3+32H8oTUC27UmIyORZBNwATjO+vQmRJ10GsMz2JCbb9yR22/uB9y3PRcSGIsD4/+EyeXrtdeCVkftpQMXIVxGZZKYWegD4Epg55rnMkedEZJKZWuifAIsfeC4ArALMX8Ik4jMmFvpM4FP++5TcPOA7A3MQ8TUTF7U8D0SA3pHH+cAl7p8HnAY8C/QZmIuIL5lY6L8CH4x5vAD4BvjaQFtE0EUtIr5g63r0xcCrltoiNj14UNoIGwv9MrB65CbiRy22JyAiIiIiIiIiIiIiIiIiIiIiIiIiIiIiYtu/k0ORWCvP+9oAAAAASUVORK5CYII=" alt="avatar"></p>
+<h2 id="Linux内核的kfifo"><a href="#Linux内核的kfifo" class="headerlink" title="Linux内核的kfifo"></a>Linux内核的kfifo</h2><p>在Linux内核文件 kfifo.h 和 kfifo.c 中，定义了一个先进先出圆形缓冲区实现。如果只有一个读线程、一个写线程，二者没有共享的被修改的控制变量，那么可以证明这种情况下不需要并发控制。kfifo就满足上述条件。kfifo要求缓冲区长度必须为2的幂。读、写指针分别是无符号整型变量。把读写指针变换为缓冲区内的索引值，仅需要“按位与”操作：（指针值 按位与 （缓冲区长度-1））。这避免了计算代价高昂的“求余”操作。且下述关系总是成立：</p>
+<blockquote>
+<p>读指针 + 缓冲区存储的数据长度 &#x3D;&#x3D; 写指针</p>
+</blockquote>
+<p>即使在写指针达到了无符号整型的上界，上溢出后写指针的值小于读指针的值，上述关系仍然保持成立（这是因为无符号整型加法的性质）。 kfifo的写操作，首先计算缓冲区中当前可写入存储空间的数据长度：</p>
+<blockquote>
+<p>len &#x3D; min{待写入数据长度, 缓冲区长度 - （写指针 - 读指针）}</p>
+</blockquote>
+<p>然后，分两段写入数据。第一段是从写指针开始向缓冲区末尾方向；第二段是从缓冲区起始处写入余下的可写入数据，这部分可能数据长度为0即并无实际数据写入。</p>
+<h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">kfifo</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> *buffer;    <span class="comment">/* the buffer holding the data */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> size;    <span class="comment">/* the size of the allocated buffer */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> in;    <span class="comment">/* data is added at offset (in % size) */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> out;    <span class="comment">/* data is extracted from off. (out % size) */</span></span><br><span class="line">    <span class="type">spinlock_t</span> *lock;    <span class="comment">/* protects concurrent modifications */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>先看一下基本定义，buffer是数据缓存区，size是缓存区长度，in&#x2F;out是输入输出指针（也就是上文提到的readIndex和writeIndex）位置（%size后就是真实指针了）。</p>
+<p>size需要检测是否为2的次幂，不是的话需要升到2的次幂。方便后续计算。（可以看内核的roundup_pow_of_two实现）</p>
+<p>in、out每次操作都+对应的读写长度，通过取模运算回落size区间。</p>
+<blockquote>
+<p>data :&#x3D; kfifo.buffer[ kfifo.out % kfifo.size: kfifo.in % kfifo.size]</p>
+</blockquote>
+<h3 id="快速取膜"><a href="#快速取膜" class="headerlink" title="快速取膜"></a>快速取膜</h3><p>kfifo使用了二进制的位运算实现了2的幂取模运算，并且利用了无符号数的溢出做回绕。很精妙的设计。</p>
+<p>首先，缓存区尺寸要取整为2的幂次，这样可以利用位运算进行取模。</p>
+<p><code>M mod N = M &amp; (N-1)</code></p>
+<p>当N为2的幂次时有效。</p>
+<h3 id="回绕"><a href="#回绕" class="headerlink" title="回绕"></a>回绕</h3><p>无符号数溢出后，就会变成0从头开始，借助这个特性可以绕开逻辑判断。</p>
+<h1 id="实现代码"><a href="#实现代码" class="headerlink" title="实现代码"></a>实现代码</h1><ul>
+<li>golang实现</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> KfifoBuffer <span class="keyword">struct</span> &#123;</span><br><span class="line">	size       <span class="type">uint32</span></span><br><span class="line">	readIndex  <span class="type">uint32</span></span><br><span class="line">	writeIndex <span class="type">uint32</span></span><br><span class="line">	data       []<span class="type">byte</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">(size <span class="type">uint32</span>)</span></span> *KfifoBuffer &#123;</span><br><span class="line">	<span class="comment">// if size not pow of 2 round up it</span></span><br><span class="line">	<span class="keyword">if</span> (size &amp; (size - <span class="number">1</span>)) != <span class="number">0</span> &#123;</span><br><span class="line">		size = size | (size &gt;&gt; <span class="number">1</span>)</span><br><span class="line">		size = size | (size &gt;&gt; <span class="number">2</span>)</span><br><span class="line">		size = size | (size &gt;&gt; <span class="number">4</span>)</span><br><span class="line">		size = size | (size &gt;&gt; <span class="number">8</span>)</span><br><span class="line">		size = size | (size &gt;&gt; <span class="number">16</span>)</span><br><span class="line">		size++</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;KfifoBuffer&#123;</span><br><span class="line">		size:       size,</span><br><span class="line">		readIndex:  <span class="number">0</span>,</span><br><span class="line">		writeIndex: <span class="number">0</span>,</span><br><span class="line">		data:       <span class="built_in">make</span>([]<span class="type">byte</span>, size),</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">min</span><span class="params">(l, r <span class="type">uint32</span>)</span></span> <span class="type">uint32</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> l &gt; r &#123;</span><br><span class="line">		<span class="keyword">return</span> r</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> l</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(k *KfifoBuffer)</span></span> Write(data []<span class="type">byte</span>) (n <span class="type">uint32</span>, err <span class="type">error</span>) &#123;</span><br><span class="line">	dataLen := <span class="type">uint32</span>(<span class="built_in">len</span>(data))</span><br><span class="line">	dataLen = min(dataLen, k.size-k.writeIndex+k.readIndex)</span><br><span class="line">	<span class="comment">// l is buffer rest length</span></span><br><span class="line">	l := min(dataLen, k.size-(k.writeIndex&amp;(k.size<span class="number">-1</span>)))</span><br><span class="line">	<span class="built_in">copy</span>(k.data[k.writeIndex&amp;(k.size<span class="number">-1</span>):], data[:l])</span><br><span class="line">	<span class="built_in">copy</span>(k.data[:dataLen-l], data[l:])</span><br><span class="line">	k.writeIndex += dataLen</span><br><span class="line">	<span class="keyword">return</span> dataLen, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(k *KfifoBuffer)</span></span> Read(buffer []<span class="type">byte</span>) (n <span class="type">uint32</span>, err <span class="type">error</span>) &#123;</span><br><span class="line">	dataLen := <span class="type">uint32</span>(<span class="built_in">len</span>(buffer))</span><br><span class="line">	dataLen = min(dataLen, k.writeIndex-k.readIndex)</span><br><span class="line">	l := min(dataLen, k.size-(k.readIndex&amp;(k.size<span class="number">-1</span>)))</span><br><span class="line">	<span class="built_in">copy</span>(buffer, k.data[k.readIndex&amp;(k.size<span class="number">-1</span>):k.readIndex&amp;(k.size<span class="number">-1</span>)+l])</span><br><span class="line">	<span class="built_in">copy</span>(buffer[l:], k.data[:dataLen-l])</span><br><span class="line">	k.readIndex += dataLen</span><br><span class="line">	<span class="keyword">return</span> dataLen, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>关于无锁队列的话题，一篇文章讲不完，以后可能会开多个文章分开来讲</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/algorithm/" rel="tag"># algorithm</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/03/16/gRPC-learn-2/" rel="prev" title="gRPC学习 2 开始使用gRPC">
+      <i class="fa fa-chevron-left"></i> gRPC学习 2 开始使用gRPC
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/05/03/%E5%AD%A6%E4%B9%A0dpdk-1/" rel="next" title="学习dpdk-1">
+      学习dpdk-1 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95"><span class="nav-number">1.</span> <span class="nav-text">无锁队列算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E8%81%8A%E8%81%8A%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.1.</span> <span class="nav-text">先聊聊应用场景</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF"><span class="nav-number">2.</span> <span class="nav-text">算法实现思路</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A6%96%E5%85%88%E6%98%AF%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97"><span class="nav-number">2.1.</span> <span class="nav-text">首先是环形队列</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux%E5%86%85%E6%A0%B8%E7%9A%84kfifo"><span class="nav-number">2.2.</span> <span class="nav-text">Linux内核的kfifo</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86"><span class="nav-number">2.2.1.</span> <span class="nav-text">基本原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E5%8F%96%E8%86%9C"><span class="nav-number">2.2.2.</span> <span class="nav-text">快速取膜</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9E%E7%BB%95"><span class="nav-number">2.2.3.</span> <span class="nav-text">回绕</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E4%BB%A3%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text">实现代码</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Hall</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Hall</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
