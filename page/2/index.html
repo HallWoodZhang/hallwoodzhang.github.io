@@ -146,6 +146,178 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/25/tiny_socket/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Hall">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hall">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/12/25/tiny_socket/" class="post-title-link" itemprop="url">用C++实现一个非常简单的socket即时通信机制</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-12-25 09:10:20" itemprop="dateCreated datePublished" datetime="2018-12-25T09:10:20+08:00">2018-12-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-13 18:10:45" itemprop="dateModified" datetime="2022-03-13T18:10:45+08:00">2022-03-13</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><p>在这个简单的demo中，我们需要两个主要的部分</p>
+<ol>
+<li>服务器：能够接受新的客户端连接，并将每个客户端发过来的消息发给所有其他的客户端</li>
+<li>客户端：能够连接服务器，并且向服务器发送信息</li>
+</ol>
+<p>这个是最简单的群聊功能, 以后有空的话考虑加入两个客户端之间的私聊功能, 第一版我不会加入太多的东西,包括但不限于线程池, 多线程编程, 超时重传, 确认收包( 当然还包括GUI )等特性在初版中我都不会涉及, 这一次的理解重点在于Linux epoll和C/S架构的理解</p>
+<h2 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h2><p>从之前的需求的大致整理,我们可以归纳出以下几条要点</p>
+<h3 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h3><ol>
+<li>连接服务器</li>
+<li>支持用户输入信息,发送信息给服务器</li>
+<li>接受并且显示服务器的信息</li>
+<li>退出连接</li>
+</ol>
+<p>针对上述需求, 客户端实现需要两个进程, 分别支持下面的功能</p>
+<p>对于子进程:</p>
+<ol>
+<li>等待用户输入聊天信息</li>
+<li>将信息写入管道( pipe ) 中读取, 并且发送给服务器</li>
+</ol>
+<p>对于父进程:</p>
+<ol>
+<li>使用epoll机制接受接受服务器端发过来的信息, 并显示给用户, 使用户看到其他用户的聊天信息</li>
+<li>将子进程写道pipe内的信息读取出来并且发送给服务器端</li>
+</ol>
+<h3 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h3><ol>
+<li>支持多个客户端接入，实现聊天室基本功能</li>
+<li>启动服务建立监听端口等待客户端连接</li>
+<li>使用epoll机制实现并发，增加效率</li>
+<li>客户端连接时发送欢迎消息并存储连接记录</li>
+<li>客户端发送消息时广播给其他所有客户端</li>
+<li>客户端请求退出时对连接信息进行清理</li>
+</ol>
+<h2 id="模型"><a href="#模型" class="headerlink" title="模型"></a>模型</h2><p>模型采用C/S模型</p>
+<ul>
+<li>服务器端<ol>
+<li>socket()创建监听socket</li>
+<li>bind()绑定服务器端口</li>
+<li>listen()监听客户端连接</li>
+<li>accept()接受连接</li>
+<li>recv/send接受和发送数据</li>
+<li>close()关闭socket</li>
+</ol>
+</li>
+</ul>
+<ul>
+<li>客户端<ol>
+<li>socket()创建监听socket</li>
+<li>connect()连接服务器</li>
+<li>recv/send接受或者传送信息</li>
+<li>close()关闭socket</li>
+</ol>
+</li>
+</ul>
+<h3 id="TCP服务端通信的常规步骤"><a href="#TCP服务端通信的常规步骤" class="headerlink" title="TCP服务端通信的常规步骤"></a>TCP服务端通信的常规步骤</h3><ol>
+<li>使用socket()创建TCP套接字（socket）</li>
+<li>将创建的套接字绑定到一个本地地址和端口上（Bind）</li>
+<li>将套接字设为监听模式，准备接收客户端请求（listen）</li>
+<li>等待客户请求到来: 当请求到来后，接受连接请求，返回一个对应于此次连接的新的套接字（accept）</li>
+<li>用accept返回的套接字和客户端进行通信（使用write()/send()或send()/recv() )</li>
+<li>返回，等待另一个客户请求</li>
+<li>关闭套接字</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Server.cpp代码（通信模块）：</span></span><br><span class="line"><span class="comment">// 服务端地址 ip地址 + 端口号</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_in</span> <span class="title">serverAddr</span>;</span></span><br><span class="line">serverAddr.sin_family = PF_INET;</span><br><span class="line">serverAddr.sin_port = htons(SERVER_PORT);</span><br><span class="line">serverAddr.sin_addr.s_addr = inet_addr(SERVER_HOST);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 服务端创建监听socket</span></span><br><span class="line"><span class="keyword">int</span> listener = socket(PF_INET, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line"><span class="keyword">if</span>(listener &lt; <span class="number">0</span>) &#123; perror(<span class="string">"listener"</span>); <span class="built_in">exit</span>(<span class="number">-1</span>);&#125;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"listen socket created \n"</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将服务端地址与监听socket绑定</span></span><br><span class="line"><span class="keyword">if</span>( bind(listener, (struct sockaddr *)&amp;serverAddr, <span class="keyword">sizeof</span>(serverAddr)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    perror(<span class="string">"bind error"</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 开始监听</span></span><br><span class="line"><span class="keyword">int</span> ret = listen(listener, <span class="number">5</span>);</span><br><span class="line"><span class="keyword">if</span>(ret &lt; <span class="number">0</span>) &#123; perror(<span class="string">"listen error"</span>); <span class="built_in">exit</span>(<span class="number">-1</span>);&#125;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"Start to listen: %s\n"</span>, SERVER_HOST);</span><br></pre></td></tr></table></figure>
+<p>之后会提到accept和epoll的方法</p>
+<h2 id="TCP客户端通信的常规步骤"><a href="#TCP客户端通信的常规步骤" class="headerlink" title="TCP客户端通信的常规步骤"></a>TCP客户端通信的常规步骤</h2><ol>
+<li>创建套接字（socket）</li>
+<li>使用connect()建立到达服务器的连接（connect)</li>
+<li>客户端进行通信（使用write()/send()或send()/recv())</li>
+<li>使用close()关闭客户连接</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Client.cpp代码（通信模块）：</span></span><br><span class="line"><span class="comment">// 客户要连接的服务端地址（ ip地址 + 端口号）</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_in</span> <span class="title">serverAddr</span>;</span></span><br><span class="line">serverAddr.sin_family = PF_INET;</span><br><span class="line">serverAddr.sin_port = htons(SERVER_PORT);</span><br><span class="line">serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建套接字（socket）</span></span><br><span class="line"><span class="keyword">int</span> sock = socket(PF_INET, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line"><span class="keyword">if</span>(sock &lt; <span class="number">0</span>) &#123; perror(<span class="string">"sock error"</span>); <span class="built_in">exit</span>(<span class="number">-1</span>); &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 向服务器发出连接请求（connect）</span></span><br><span class="line"><span class="keyword">if</span>(connect(sock, (struct sockaddr *)&amp;serverAddr, <span class="keyword">sizeof</span>(serverAddr)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    perror(<span class="string">"connect error"</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至于客户端如何实现管道之间的通信，以及与服务端之间的通信，在后面会详细介绍。</p>
+<h2 id="基本技术"><a href="#基本技术" class="headerlink" title="基本技术"></a>基本技术</h2><h3 id="阻塞和非阻塞socket"><a href="#阻塞和非阻塞socket" class="headerlink" title="阻塞和非阻塞socket"></a>阻塞和非阻塞socket</h3><p>通常的,对一个文件描述符对应的文件或者是设备, 阻塞和非阻塞方式</p>
+<ol>
+<li>阻塞方式指的是: 当试图对该文件描述符进行读写的时候, 如果当时没有数据可读或者暂时不可写, 那么程序就进入等待状态, 知道有东西/空间可以读/写时, 程序接受到某个信号量被唤醒重新进入就绪队列( 操作系统 )</li>
+<li>如果没有资源可写或者没有数据可读, 那么直接返回, 或者等一个特定的时间片再来寻求相应的资源</li>
+</ol>
+<p>两者的区别就是, 是否等待某一个信号量来重新唤醒。<br>我们这个小demo采用非阻塞的socket<br>这样能够充分利用服务器性能（<del>其实是偷懒比较方便</del>）</p>
+<h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><p>当服务端的在线人数越来越多，会导致系统资源吃紧，I/O效率越来越慢，这时候就应该考虑epoll了。epoll是Linux内核为处理大批句柄而作改进的poll，是Linux特有的I/O函数。其特点如下：</p>
+<ol>
+<li>epoll是Linux下多路复用IO接口select/poll的增强版本。其实现和使用方式与select/poll有很多不同，epoll通过一组函数来完成有关任务，而不是一个函数</li>
+<li>epoll之所以高效，是因为epoll将用户关心的文件描述符放到内核里的一个事件表中，而不是像select/poll每次调用都需要重复传入文件描述符集或事件集。比如当一个事件发生（比如说读事件），epoll无须遍历整个被侦听的描述符集，只要遍历那些被内核IO事件异步唤醒而加入就绪队列的描述符集合就行了。</li>
+<li>epoll有两种工作方式，LT(level triggered)：水平触发和ET(edge-triggered)：边沿触发。LT是select/poll使用的触发方式，比较低效；而ET是epoll的高速工作方式，这次demo使用epoll的ET方式。</li>
+</ol>
+<p>想要了解epoll的可以康康 <a href="https://www.cnblogs.com/lojunren/p/3856290.html" title="这篇博客" target="_blank" rel="noopener">这篇博客</a> ，这篇博客的参考文献也挺有读一读的价值</p>
+<p>咳咳，言归正传，我们看看epoll的C/C++接口长啥样子</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建一个epoll句柄，参数size用来告诉内核需要监听的文件描述符的数目，这个size是有上限的，随着内核的更新可能会不同</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_create</span><span class="params">(<span class="keyword">int</span> size)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 事件注册函数</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">函数功能： epoll事件注册函数</span></span><br><span class="line"><span class="comment">　 参数epfd为epoll的句柄，即epoll_create返回值</span></span><br><span class="line"><span class="comment">　 参数op表示动作，用3个宏来表示：</span></span><br><span class="line"><span class="comment">　　  EPOLL_CTL_ADD(注册新的fd到epfd)， </span></span><br><span class="line"><span class="comment">　EPOLL_CTL_MOD(修改已经注册的fd的监听事件)，</span></span><br><span class="line"><span class="comment">　　  EPOLL_CTL_DEL(从epfd删除一个fd)；</span></span><br><span class="line"><span class="comment">　　  其中参数fd为需要监听的标示符；</span></span><br><span class="line"><span class="comment">　 参数event告诉内核需要监听的事件，event的结构如下：</span></span><br><span class="line"><span class="comment">struct epoll_event &#123;</span></span><br><span class="line"><span class="comment">  __uint32_t events; //Epoll events</span></span><br><span class="line"><span class="comment">  epoll_data_t data; //User data variable</span></span><br><span class="line"><span class="comment">&#125;;</span></span><br><span class="line"><span class="comment">其中介绍events是宏的集合，本项目主要使用EPOLLIN(表示对应的文件描述符可以读，即读事件发生)，其他宏类型，可以google之！</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">int</span> op, <span class="keyword">int</span> fd, struct epoll_event *event)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等待事件的产生，我猜可能有点类似C#中的async</span></span><br><span class="line"><span class="comment">// 函数返回需要处理的事件数目</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_wait</span><span class="params">(<span class="keyword">int</span> epfd, struct epoll_event * events, <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>因此服务端使用epoll的时候，步骤如下：</p>
+<ol>
+<li>调用epoll_create函数在Linux内核中创建一个事件表；</li>
+<li>然后将文件描述符（监听套接字listener）添加到所创建的事件表中；</li>
+<li>在主循环中，调用epoll_wait等待返回就绪的文件描述符集合；</li>
+<li>分别处理就绪的事件集合，本项目中一共有两类事件：新用户连接事件和用户发来消息事件（epoll还有很多其他事件，这里我就不深入了以后有机会再开坑</li>
+</ol>
+<p>把一个socket添加到事件中</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//将文件描述符fd添加到epollfd标示的内核事件表中， 并注册EPOLLIN和EPOOLET事件，EPOLLIN是数据可读事件；EPOOLET表明是ET工作方式。最后将文件描述符设置非阻塞方式</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">  * @param epollfd: epoll句柄</span></span><br><span class="line"><span class="comment">  * @param fd: 文件描述符</span></span><br><span class="line"><span class="comment">  * @param enable_et : enable_et = true, </span></span><br><span class="line"><span class="comment">     采用epoll的ET工 作方式；否则采用LT工作方式</span></span><br><span class="line"><span class="comment">**/</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">addfd</span><span class="params">( <span class="keyword">int</span> epollfd, <span class="keyword">int</span> fd, <span class="keyword">bool</span> enable_et )</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">epoll_event</span> <span class="title">ev</span>;</span></span><br><span class="line">    ev.data.fd = fd;</span><br><span class="line">    ev.events = EPOLLIN;</span><br><span class="line">    <span class="keyword">if</span>( enable_et )</span><br><span class="line">        ev.events = EPOLLIN | EPOLLET;</span><br><span class="line">    epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &amp;ev);</span><br><span class="line">    setnonblocking(fd);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"fd added to epoll!\n\n"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h1><p>我们已经进行了一系列的分析，是时候进行一波实现了，又到了我最喜欢的coding环节</p>
+<p>先进行一波初始化</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 初始化代码文件夹</span></span><br><span class="line">$ mkdir -p /home/hallwood/Code/learning/cpp/tiny_msg_demo</span><br><span class="line">$ <span class="built_in">cd</span> /home/hallwood/Code/learning/cpp/tiny_msg_demo</span><br><span class="line">$ mkdir header cpp</span><br><span class="line">$ git init</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装cmake</span></span><br><span class="line">$ sudo pacman -S cmake</span><br><span class="line">$ touch CMakeLists.txt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建对应的文件</span></span><br><span class="line">$ touch Common.h Client.h Client.cpp ClientMain.cpp</span><br><span class="line">$ touch Server.h Server.cpp ServerMain.cpp</span><br><span class="line"></span><br><span class="line"><span class="comment"># 移动文件到对应的文件夹</span></span><br><span class="line">$ mv *.h ./header</span><br><span class="line">$ mv *.cpp ./cpp</span><br></pre></td></tr></table></figure>
+<p>每个文件的作用:</p>
+<ol>
+<li>Common.h: 公共头文件</li>
+<li>Client.h, Client.cpp: 客户端类实现</li>
+<li>Server.h, Server.cpp: 服务器端实现</li>
+<li>ClientMain.cpp,和ServerMain.cpp: 分别是客户端程序和服务器端程序的执行入口</li>
+</ol>
+<p>接下来我们开始逐渐实现我们需要的类</p>
+<h2 id="Common-h"><a href="#Common-h" class="headerlink" title="Common.h"></a>Common.h</h2><p>这个头文件是Client程序和Server程序共用的， 我们只需要定义一个单独的函数被类成员函数调用即可，这个功能函数的作用就是之前提到的将文件描述符fd添加到epollfd标示的内核事件表中，因此我们把它卸载Common.h中，</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/01/stl-analysis1-md/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -658,12 +830,12 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
