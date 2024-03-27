@@ -22,8 +22,8 @@
 
   <meta name="description" content="无锁队列算法先聊聊应用场景我们现在工作中需要在客户终端部署一个和云端服务器交互的媒介组件，由于客户内网服务器中的很多进程需要使用这些服务，所以开发了一个汇集了所有云端接口访问的一个中间件，并且通过共享内存环和调用服务方进行交互。 讲完了这个简单的场景，那么现在需要先解决一个算法上的问题： 提高性能，如何实现单一消费者（在这个场景中就是远端对接组件，共享内存的消费方）以及多个消费者的高效交互。 这时">
 <meta property="og:type" content="article">
-<meta property="og:title" content="无锁队列算法 先导">
-<meta property="og:url" content="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95%20%E5%85%88%E5%AF%BC/index.html">
+<meta property="og:title" content="无锁队列算法（1） 先导 Linux kfifo">
+<meta property="og:url" content="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95_%E5%85%88%E5%AF%BC/index.html">
 <meta property="og:site_name" content="Hall">
 <meta property="og:description" content="无锁队列算法先聊聊应用场景我们现在工作中需要在客户终端部署一个和云端服务器交互的媒介组件，由于客户内网服务器中的很多进程需要使用这些服务，所以开发了一个汇集了所有云端接口访问的一个中间件，并且通过共享内存环和调用服务方进行交互。 讲完了这个简单的场景，那么现在需要先解决一个算法上的问题： 提高性能，如何实现单一消费者（在这个场景中就是远端对接组件，共享内存的消费方）以及多个消费者的高效交互。 这时">
 <meta property="og:locale" content="zh_CN">
@@ -35,13 +35,13 @@
 <meta property="og:image" content="data:image/png;base64,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">
 <meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAYAAADuxoTyAAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH2QcSChYB192k1AAABNtJREFUeJzt3G1IVXcAx/Gv59rYwFbWKnt0jXozWhvsDkHfdPM6WPgml1vJaDG3zCa5wYikRWSZNcdGvliBDz3Ruolvt/kwGGwIG9wRzdigR1b24ARrKi313nP24mpJDNY1/f+L8/vAxXsv/P3+vd4/53jOPYKIiIiIiIiIiIiIiIiIiIiIiIiIiIiIyOMlJdkBjuP85rruS6mpUwYmY0L/x3Xjaa7rYqsfj8fSPM+z1o/FhtMA9X3cdxyn03Xd5cmMS3qhp6Y+dX3JkmVzN2zYluzQCbFjxzvMmbOQsrJqK/3t24uYOnU627Z9ZaVfUbGWadNmWOvv3LmeeDzOnj0nrPUHB++yb1+TlX5V1Ub6+29b6x85so8LF87eiMWG5iUzLjXZUCAQGAiHCwmHC5MdOiH27t3khcOFKbb6NTVbvFBotbX+gQNbycl5w9rrX1e3i6VLX7banzVrgRcOFya9kZoIJ058gevGrfW7ui5y+fIfA7FYcuOcyZmOiDxOtNBFfEALXcQHfLXQg8GUe7fc3OeM95ubDxIKpRMKpdPcfNB4//DhakKhdFatWsDp0z8Z7/f0XCcrawo9PdeNt+H+73/lyhlEIrVW5mBL0gfjnmTRqAfA8eOfc+XKOeP92tqtHDr0AwCbNq1kzZpSo/36+t3U1f0IwP79H3L06C9G++3tp/A8l/b2JoqKPjLaHhWNepw7d4bi4hzWrt1iZQ42+GqLPqqtLUJe3tvGuxkZi+7dnzs303h/3bpySkpWcOzYZ5w/f8Z4v6XlJEVFH9PaetJ4+0Hp6bNtT8EoX23RAa5evUB3dxfB4Arj7ZKSXRQX5wBQVWX+zV5WVk1ZWTWdnT/T0fGt0XZX10Vu3rzC5s1V5Odncu3aJebPf8HoHCCx++44DhUVh4y3bfLdFr2tLUJu7ps4TsB4u7KymIaGDhoaOqisfM94H+DOnX7q63eTlZVntNvWFqG3t5vs7Kfp7e2mtTVitD8qGvWIRDqprd1qpW+L7xZ6a2uEvLy3rLQLCjZSWppLaWkuBQUbjfeDwRRCoRkMDw8a/2RdS8tJGhs7iEY9Ghs7rO2+B4MprF//Gvn571rp2+K7XfemprPW2uXlNZSX11jrjx6MtGHs6758eTanTnUan4PNn982323RRfxIC13EB8ax6+45fX236Ou7NfGzeQiuG8dmPxaLWe0PDw9Z7Q8NDVrvDwz8bbF/l8HBu9b6ia6X9AZ6PNej33Jdd3qy4yaK4wRw3bitPI7j4Lqutb6I4zi3XddNT2bMeC61exF4ZhzjxjYf5ahIJvAP8NcjfI9HsRAYBm5a6s8DXIv9DBJ/8tn5HGuiPwW4aqk/m8T7/09LfUi8/3+32H8oTUC27UmIyORZBNwATjO+vQmRJ10GsMz2JCbb9yR22/uB9y3PRcSGIsD4/+EyeXrtdeCVkftpQMXIVxGZZKYWegD4Epg55rnMkedEZJKZWuifAIsfeC4ArALMX8Ik4jMmFvpM4FP++5TcPOA7A3MQ8TUTF7U8D0SA3pHH+cAl7p8HnAY8C/QZmIuIL5lY6L8CH4x5vAD4BvjaQFtE0EUtIr5g63r0xcCrltoiNj14UNoIGwv9MrB65CbiRy22JyAiIiIiIiIiIiIiIiIiIiIiIiIiIiIiYtu/k0ORWCvP+9oAAAAASUVORK5CYII=">
 <meta property="article:published_time" content="2022-04-17T15:45:10.000Z">
-<meta property="article:modified_time" content="2022-05-11T15:59:26.620Z">
+<meta property="article:modified_time" content="2022-06-06T14:52:24.511Z">
 <meta property="article:author" content="Hall">
 <meta property="article:tag" content="algorithm">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAA2CAMAAADZGHTAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABPlBMVEUAAAADAwQEBAUDAwQEBAUDAwMCAgMEBAUCAgICAgIEBAUCAgMEBAQICAkLCw4NDREjIysbGyEODhISEhcXFx1CQlI1NUIpKTMODhERERYWFhw/P08yMj8nJzEFBQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABISFqGhqdCQlI6OkkQEBQzM0AUFBkrKzYZGSAgIChubonMzP9jY3xZWW9OTmIeHiYnJzAwMDxpaYPCwvNfX3dVVWpLS14dHSQlJS4uLjoAAAADAwQDAwMBAQH////0oLsCAAAAS3RSTlMAxvP7+fv6+vr5+/n82v7+/v7+/v7+/v7+/v7+/v7XLzo7XFBaU1dVizUf5s8BEyW+9GhUokHr3g4D1v2bePXlEunHM4nUsINzfMWAuOuUAAAAAWJLR0RpvGvEtAAAAAd0SU1FB+EICBAUBNHtsZUAAAFGSURBVGje7ZlXT0IxGIbBvRD3lnNkulFBxYlileVW3Lir/v9fIMYrTc5bc25M6fvcNU968SRNv6T1eAghhBBCCCHa4q3B1NZhX6/wDY3YNyl8cwv2rW2KAK9juq+4D2k/wN5/iP3RMfYnp9ifdWB/3ol90eecXrqAdF1i332Ffc819je92N/2YX/Xj32J6UxnOtOZznSmM53pTGd61aSX7yEDD9gPPmI/9IT98zD2LyPYv45iX3ZOD0jMm8K/K/yH/GcCjumW/ZOxX+tgyIaEI9hHY9jHothHwtiHgtjb1p9fbcYnTH2vmpyantE6YDbuduecnF/QOj2RdLlxcUnK5ZSJ6SurlStxbd3E9I3Nr3GQjpuXvrX9PQoz5qXvCCF294TIpsw78BWSCb2nM9Ndpecsrcm5T88XNCfPL2RCCCGEEEKqh0+DACz7FQ3mlAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0wOC0wOFQxNjoyMDowNCswMDowMPTbQDwAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMDgtMDhUMTY6MjA6MDQrMDA6MDCFhviAAAAAAElFTkSuQmCC">
 
-<link rel="canonical" href="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95%20%E5%85%88%E5%AF%BC/">
+<link rel="canonical" href="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95_%E5%85%88%E5%AF%BC/">
 
 
 <script id="page-configurations">
@@ -54,7 +54,7 @@
   };
 </script>
 
-  <title>无锁队列算法 先导 | Hall</title>
+  <title>无锁队列算法（1） 先导 Linux kfifo | Hall</title>
   
 
 
@@ -160,7 +160,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95%20%E5%85%88%E5%AF%BC/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/04/17/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95_%E5%85%88%E5%AF%BC/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -173,7 +173,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          无锁队列算法 先导
+          无锁队列算法（1） 先导 Linux kfifo
         </h1>
 
         <div class="post-meta">
@@ -190,7 +190,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-05-11 23:59:26" itemprop="dateModified" datetime="2022-05-11T23:59:26+08:00">2022-05-11</time>
+                <time title="修改时间：2022-06-06 22:52:24" itemprop="dateModified" datetime="2022-06-06T22:52:24+08:00">2022-06-06</time>
               </span>
 
           
@@ -367,12 +367,12 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -399,7 +399,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2022</span>
+  <span itemprop="copyrightYear">2024</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

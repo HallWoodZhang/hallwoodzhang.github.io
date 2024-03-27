@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="基于共享内存实现的无锁队列 1 共享内存基础与golang实现共享内存的基本介绍部分内容选自《UNIX网络编程：卷2》  共享内存区是所有IPC形式中最快的。一旦这样的内存区映射到共享它的进程的地址空间，这些进程间的数据传递就不再涉及到内核。但是这些进程间通常需要使用某种形式的同步（前几节介绍的互斥锁、条件变量、读写锁、记录锁和信号量）。   优点：共享内存（shared memory）是最简单的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于共享内存实现的无锁队列 1 共享内存基础与golang实现">
+<meta property="og:url" content="http://yoursite.com/2023/02/24/shm-lockfree-1/index.html">
+<meta property="og:site_name" content="Hall">
+<meta property="og:description" content="基于共享内存实现的无锁队列 1 共享内存基础与golang实现共享内存的基本介绍部分内容选自《UNIX网络编程：卷2》  共享内存区是所有IPC形式中最快的。一旦这样的内存区映射到共享它的进程的地址空间，这些进程间的数据传递就不再涉及到内核。但是这些进程间通常需要使用某种形式的同步（前几节介绍的互斥锁、条件变量、读写锁、记录锁和信号量）。   优点：共享内存（shared memory）是最简单的">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-24T13:33:44.000Z">
+<meta property="article:modified_time" content="2024-03-27T15:50:12.608Z">
+<meta property="article:author" content="Hall">
+<meta property="article:tag" content="golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2023/02/24/shm-lockfree-1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于共享内存实现的无锁队列 1 共享内存基础与golang实现 | Hall</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hall</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">其实是一个备忘录</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2023/02/24/shm-lockfree-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Hall">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hall">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于共享内存实现的无锁队列 1 共享内存基础与golang实现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-24 21:33:44" itemprop="dateCreated datePublished" datetime="2023-02-24T21:33:44+08:00">2023-02-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-03-27 23:50:12" itemprop="dateModified" datetime="2024-03-27T23:50:12+08:00">2024-03-27</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="基于共享内存实现的无锁队列-1-共享内存基础与golang实现"><a href="#基于共享内存实现的无锁队列-1-共享内存基础与golang实现" class="headerlink" title="基于共享内存实现的无锁队列 1 共享内存基础与golang实现"></a>基于共享内存实现的无锁队列 1 共享内存基础与golang实现</h1><h2 id="共享内存的基本介绍"><a href="#共享内存的基本介绍" class="headerlink" title="共享内存的基本介绍"></a>共享内存的基本介绍</h2><p>部分内容选自《UNIX网络编程：卷2》</p>
+<blockquote>
+<p>共享内存区是所有IPC形式中最快的。一旦这样的内存区映射到共享它的进程的地址空间，这些进程间的数据传递就不再涉及到内核。但是这些进程间通常需要使用某种形式的同步（前几节介绍的互斥锁、条件变量、读写锁、记录锁和信号量）。</p>
+</blockquote>
+<ul>
+<li><p>优点：共享内存（shared memory）是最简单的最大自由度的Linux进程间通信方式之一。使用共享内存，不同进程可以对同一块内存进行读写。由于所有进程对共享内存的访问就和访问自己的内存空间一样，而不需要进行额外系统调用或内核操作，同时还避免了多余的内存拷贝，这种方式是效率最高、速度最快的进程间通信方式。</p>
+</li>
+<li><p>缺点：内核并不提供任何对共享内存访问的同步机制，比如同时对共享内存的相同地址进行写操作，则后写的数据会覆盖之前的数据。所以，使用共享内存一般还需要使用其他IPC机制（如信号量）进行读写同步与互斥。</p>
+</li>
+</ul>
+<p>原理：内核对内存的管理是以页（page）为单位的，Linux下一般一个page大小是4k。而程序本身的虚拟地址空间是线性的，所以内核管理了进程从虚拟地址空间到起对应的页的映射。创建共享内存空间后，内核将不同进程虚拟地址的映射到同一个页面。所以在不同进程中，对共享内存所在的内存地址的访问最终都被映射到同一页面。</p>
+<p>共享内存的方式主要有四种：</p>
+<ol>
+<li>System V共享内存；</li>
+<li>POSIX mmap文件映射实现共享内存；</li>
+<li>通过memfd_create()和fd跨进程共享实现共享内存；</li>
+<li>基于dma-buf的共享内存（多媒体、图形领域广泛使用）。</li>
+</ol>
+<p>这里主要介绍systemV方式和mmap方式</p>
+<h2 id="SystemV-共享内存"><a href="#SystemV-共享内存" class="headerlink" title="SystemV 共享内存"></a>SystemV 共享内存</h2><h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p>System V曾经也被称为AT&amp;T System V，是Unix操作系统众多版本中的一支。它最初由AT&amp;T开发，在1983年第一次发布。一共发行了4个System V的主要版本：版本1、2、3和4。</p>
+<p>System V共享内存机制为了在多个进程之间交换数据，内核专门留出了一块内存区域用于共享，共享这个内存区域的进程就只需要将该区域映射到本进程的地址空间中即可。内核直接实现了shmget&#x2F;at系统调用，最终也是靠tmpfs来实现的。</p>
+<p>System V的IPC对象有共享内存、消息队列、信号灯(量)。注意：在IPC的通信模式下，不管是共享内存、消息队列还是信号灯，每个IPC的对象都有唯一的名字，称为”键(key)”。通过”键”，进程能够识别所用的对象。”键”与IPC对象的关系就如同文件名称于文件，通过文件名，进程能够读写文件内的数据，甚至多个进程能够公用一个文件。而在IPC的通信模式下，通过”键”的使用也能使得一个IPC对象能为多个进程所共用。</p>
+<h3 id="使用步骤"><a href="#使用步骤" class="headerlink" title="使用步骤"></a>使用步骤</h3><p>共享内存的使用过程可分为 创建-&gt;连接-&gt;使用-&gt;分离-&gt;销毁 这几步。</p>
+<ol>
+<li>创建&#x2F;打开共享内存</li>
+<li>映射共享内存，即把指定的共享内存映射到进程的地址空间用于访问</li>
+<li>撤销共享内存的映射</li>
+<li>删除共享内存对象</li>
+</ol>
+<p>执行过程先调用shmget，获得或者创建一个IPC共享内存区域，并返回获得区域标识符。类似于mmap中先open一个磁盘文件返回文件标识符一样。</p>
+<p>再调用shmat，完成获得的共享区域映射到本进程的地址空间中，并返回进程映射地址。类似与mmap函数原理。</p>
+<p>使用完成后，调用shmdt解除共享内存区域和进程地址的映射关系。每个共享的内存区，内核维护一个struct shmid_ds信息结构，定义在sys&#x2F;shm.h头文件中</p>
+<p><strong>创建&#x2F;打开共享内存</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/ipc.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"> </span><br><span class="line"><span class="comment">// 获取</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">shmget</span><span class="params">(<span class="type">key_t</span> key， <span class="type">size_t</span> size， <span class="type">int</span> shmflg)</span></span><br></pre></td></tr></table></figure>
+
+<p>共享内存的创建使用shmget函数（shared memory get）函数。shmget根据shm_key创建一个大小为size的共享内存空间，参数shmflag是一系列的创建参数。如果shm_key已经创建，使用该shm_key会返回可以连接到该以创建共享内存的id。</p>
+<p>调用成功返回一个shmid(类似打开一个或创建一个文件获得的文件描述符一样)，调用失败返回-1。</p>
+<p><strong>将打开的共享内存区域映射到本地内存地址</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"> </span><br><span class="line"><span class="comment">// 将key对应</span></span><br><span class="line"><span class="type">void</span> * <span class="title function_">shmat</span><span class="params">(<span class="type">int</span> shmid， <span class="type">const</span> <span class="type">void</span> *shmaddr， <span class="type">int</span> shmflg)</span>;</span><br></pre></td></tr></table></figure>
+<p>创建后，为了使共享内存可以被当前进程使用，必须紧接着进行连接操作。使用函数shmat（shared memory attach），参数传入通过shmget返回的共享内存id即可。</p>
+<p>shmat返回映射到进程虚拟地址空间的地址指针，这样进程就能像访问一块普通的内存缓冲一样访问共享内存。</p>
+<h2 id="MMAP共享内存"><a href="#MMAP共享内存" class="headerlink" title="MMAP共享内存"></a>MMAP共享内存</h2><p>POSIX表示可移植操作系统接口（Portable Operating System Interface ，缩写为POSIX ），POSIX标准定义了操作系统应该为应用程序提供的接口标准，是IEEE为要在各种UNIX操作系统上运行的软件而定义的一系列API标准的总称，其正式称呼为IEEE 1003，而国际标准名称为ISO&#x2F;IEC 9945。</p>
+<p>POSIX提供了两种在无亲缘关系进程间共享内存区的方法：</p>
+<ul>
+<li>内存映射文件，由open函数打开，由mmap函数把所得到的描述符映射到当前进程空间地址中的一个文件。</li>
+<li>共享内存区对象(shared-memory object)，由shm_open函数打开一个POSIX IPC名字，所返回的描述符由mmap函数映射到当前进程的地址空间。</li>
+</ul>
+<p>这两种共享内存区的区别在于共享的数据的载体(底层支撑对象)不一样：内存映射文件的数据载体是物理文件；共享内存区对象，也就是共享的数据载体是物理内存。共享内存，一般是指共享内存区对象，也就是共享物理内存。</p>
+<p>posix的共享内存机制实际上在库过程中以及用户空间的其他部分被展示为完全的文件系统的调用过程，在调用完shm_open之后，需要调用mmap来将tmpfs的文件映射到地址空间，接着就可以操作这个文件了，需要注意的是，别的进程也可以操作这个文件，因此这个文件其实就是共享内存。</p>
+<p><strong>核心接口</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将共享内存对象映射到调用进程的虚拟地址空间。</span></span><br><span class="line"><span class="type">void</span> *<span class="title function_">mmap</span><span class="params">(<span class="type">void</span> *addr， <span class="type">size_t</span> len， <span class="type">int</span> prot， <span class="type">int</span> flags， <span class="type">int</span> fildes， <span class="type">off_t</span> off)</span>; </span><br><span class="line"><span class="comment">// 取消共享内存对象到调用进程的虚拟地址空间的映射。</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">munmap</span><span class="params">(<span class="type">void</span> *addr， <span class="type">size_t</span> len)</span>;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="两种共享内存的特点和实际上的选型"><a href="#两种共享内存的特点和实际上的选型" class="headerlink" title="两种共享内存的特点和实际上的选型"></a>两种共享内存的特点和实际上的选型</h2><p>mmap的机制：就是在磁盘上建立一个文件，每个进程存储器里面，单独开辟一个空间来进行映射。如果多进程的话，那么不会对实际的物理存储器（主存）消耗太大。</p>
+<p>在使用过程中mmap可以不映射到tmpfs（虚拟内存交换分区），这就导致mmap可能会有比较大的磁盘io使用隐患</p>
+<p>二者本质上是类似的，mmap可以看到文件的实体，而 shmget 对应的文件在交换分区上的 shm 文件系统内，无法直接 cat 查看</p>
+<ul>
+<li><p>安全性：mmap 方式对应的真实文件，如果用户有权限即可查看，甚至删除 shmget 方式其实也一样，好了一层皮罢了（ipcrm -m …）</p>
+</li>
+<li><p>一致性：mmap 方式下各进程映射文件的相同部分可以共享内存 shmget 时各个进程共享同一片内存区 不建议使用交叠的方式使用 mmap</p>
+</li>
+<li><p>持续性：进程挂了重启不丢失内容，二者都可以做到 机器挂了重启，mmap 可以不丢失内容（文件内保存了OS同步过的映像），而 shmget 会丢失</p>
+</li>
+<li><p>易用性：mmap 的接口会简单一些</p>
+</li>
+<li><p>通用性：posix 的 mmap 会相对广泛一些</p>
+</li>
+</ul>
+<p>在实际上的项目中，使用的是shmget来初始化共享内存，内存和磁盘之间的数据交换使用的是缺页中断</p>
+<h1 id="golang实现以及简单的性能测试"><a href="#golang实现以及简单的性能测试" class="headerlink" title="golang实现以及简单的性能测试"></a>golang实现以及简单的性能测试</h1><h2 id="共享内存临界区结构定义"><a href="#共享内存临界区结构定义" class="headerlink" title="共享内存临界区结构定义"></a>共享内存临界区结构定义</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Tag <span class="keyword">struct</span> &#123;</span><br><span class="line">	ReadIndex  <span class="type">uint32</span></span><br><span class="line">	WriteIndex <span class="type">uint32</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Mem <span class="keyword">struct</span> &#123;</span><br><span class="line">	*Tag</span><br><span class="line">	Queue []<span class="type">byte</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="初始化mmap和systemV共享内存"><a href="#初始化mmap和systemV共享内存" class="headerlink" title="初始化mmap和systemV共享内存"></a>初始化mmap和systemV共享内存</h2><p><strong>初始化mmap共享内存</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewMMap</span><span class="params">(path <span class="type">string</span>, size <span class="type">int</span>)</span></span> (*common.Mem, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">if</span> size &gt; common.MaxCapacity &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, common.ErrOutOfCapacity</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fd, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, os.ModePerm)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	info, err := fd.Stat()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// mmap不会更改底层文件的大小，我们要确保访问的映射地址不会超过文件大小，否则会panic</span></span><br><span class="line">	<span class="comment">// 这里设置一下底层文件大小</span></span><br><span class="line">	<span class="keyword">if</span> info.Size() != <span class="type">int64</span>(size) &#123;</span><br><span class="line">		<span class="keyword">if</span> err := fd.Truncate(<span class="type">int64</span>(size)); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 使用syscall的mmap接口，创建内存映射</span></span><br><span class="line">	<span class="comment">// mmap接口相比posix接口，少了一个addr参数，如果有需要可以使用syscall.Syscall6接口</span></span><br><span class="line">	<span class="comment">// MAP_SHARED指定映射的类型，该模式下对映射空间的更新对其他进程的映射可见，并且会写回底层文件</span></span><br><span class="line">	<span class="comment">// 映射内存会通过[]byte的形式返回</span></span><br><span class="line">	buf, err := syscall.Mmap(<span class="type">int</span>(fd.Fd()), <span class="number">0</span>, size, syscall.PROT_WRITE|syscall.PROT_READ, syscall.MAP_SHARED)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// mmap返回之后，底层文件的设备描述符可以立即close掉</span></span><br><span class="line">	fd.Close() <span class="comment">// After the mmap() call has returned, the file descriptor can be closed immediately</span></span><br><span class="line"></span><br><span class="line">	tagBuf := buf[:<span class="number">8</span>]</span><br><span class="line">	data := buf[<span class="number">8</span>:]</span><br><span class="line"></span><br><span class="line">	tag := (*common.Tag)(unsafe.Pointer(&amp;tagBuf[<span class="number">0</span>]))</span><br><span class="line">	<span class="keyword">return</span> &amp;common.Mem&#123;</span><br><span class="line">		Tag:   tag,</span><br><span class="line">		Queue: data,</span><br><span class="line">	&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>初始化systemV共享内存</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewSystemVMem</span><span class="params">(key, size <span class="type">int</span>)</span></span> (*common.Mem, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">if</span> size &gt; common.MaxCapacity &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, common.ErrOutOfCapacity</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	shmID, _, errCode := syscall.Syscall(syscall.SYS_SHMGET, <span class="type">uintptr</span>(key), <span class="type">uintptr</span>(size), ipcCreate|<span class="number">0600</span>)</span><br><span class="line">	<span class="keyword">if</span> errCode != <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;syscall syscall.SYS_SHMGET error: %d\n&quot;</span>, errCode)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	shmAddr, _, errCode := syscall.Syscall(syscall.SYS_SHMAT, shmID, <span class="number">0</span>, <span class="number">0</span>)</span><br><span class="line">	<span class="keyword">if</span> errCode != <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;syscall syscall.SYS_SHMAT error: %d\n&quot;</span>, errCode)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> data []<span class="type">byte</span></span><br><span class="line">	sh := (*reflect.SliceHeader)(unsafe.Pointer(&amp;data))</span><br><span class="line">	sh.Data = shmAddr + <span class="number">8</span> <span class="comment">// 前面8bytes存ReadIndex和WriteIndex</span></span><br><span class="line">	sh.Len = size</span><br><span class="line">	sh.Cap = size</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> &amp;common.Mem&#123;</span><br><span class="line">		Tag:   (*common.Tag)(unsafe.Pointer(shmAddr)),</span><br><span class="line">		Queue: data,</span><br><span class="line">	&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="环形队列简单实现demo"><a href="#环形队列简单实现demo" class="headerlink" title="环形队列简单实现demo"></a>环形队列简单实现demo</h2><p>首先是关于共享内存的定义</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> MultiQueue <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// 环形队列长度</span></span><br><span class="line">	<span class="comment">// 可以写入的长度为 queueLen-1，这样就可以区分 IsEmpty/IsFull</span></span><br><span class="line">	<span class="comment">// IsEmpty ： readIndex = writeIndex</span></span><br><span class="line">	<span class="comment">// IsFull：readIndex + writeIndex = queueLen</span></span><br><span class="line">	queueLen <span class="type">uint32</span></span><br><span class="line">	shm      *common.Mem</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewMultiQueue</span><span class="params">(shm *common.Mem, size <span class="type">int</span>)</span></span> (*MultiQueue, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(shm.Queue) != size &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;unmatched size&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;MultiQueue&#123;</span><br><span class="line">		queueLen: <span class="type">uint32</span>(size),</span><br><span class="line">		shm:      shm,</span><br><span class="line">	&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后是读与写的函数的实现</p>
+<p>写函数使用自旋和CAS指令，原子化的抢占并改变writeIndex</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(q *MultiQueue)</span></span> Save(buf []<span class="type">byte</span>) <span class="type">error</span> &#123;</span><br><span class="line">	blockCount := <span class="built_in">len</span>(buf) / <span class="type">int</span>(BlockDataSize)</span><br><span class="line">	lastBlkDataSize := <span class="built_in">len</span>(buf) % <span class="type">int</span>(BlockDataSize)</span><br><span class="line">	<span class="keyword">if</span> lastBlkDataSize != <span class="number">0</span> &#123;</span><br><span class="line">		blockCount++</span><br><span class="line">	&#125;</span><br><span class="line">	displacement := <span class="type">uint32</span>(blockCount * <span class="type">int</span>(BlockSize))</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		_, writeIndex, usedLen := q.loadUsedLen()</span><br><span class="line">		<span class="keyword">if</span> usedLen+displacement &gt; q.size<span class="number">-1</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> common.ErrOutOfCapacity</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> !atomic.CompareAndSwapUint32(&amp;q.shm.WriteIndex, writeIndex, (&amp;q.shm.WriteIndex, writeIndex, (writeIndex+displacement)%q.queueLen) &#123;</span><br><span class="line">			runtime.Gosched()</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> q.doSave(writeIndex, blockCount, lastBlkDataSize, buf)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>读函数将每个writer写下的block chain解析成[]byte，多个writer写入的数据一次性读出</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(q *MultiQueue)</span></span> Get() ([][]<span class="type">byte</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	currentReadIndex, _, usedLen := q.getUsedLen()</span><br><span class="line">	<span class="keyword">if</span> <span class="type">int</span>(usedLen)%<span class="type">int</span>(BlockSize) != <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;error, usedLen % block != 0&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	blockCount := <span class="type">int</span>(usedLen) / <span class="type">int</span>(BlockSize)</span><br><span class="line">	<span class="comment">// parse all blocks</span></span><br><span class="line">	blocks := q.loadBlocks(<span class="type">int</span>(currentReadIndex), blockCount)</span><br><span class="line"></span><br><span class="line">	res := q.parseBlocks(<span class="type">int</span>(currentReadIndex), blocks)</span><br><span class="line">	atomic.StoreUint32(&amp;q.shm.ReadIndex, (currentReadIndex+usedLen)%q.queueLen)</span><br><span class="line">	<span class="keyword">return</span> res, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="考虑接口泛用性，给MultiQueue套一层壳用来支持所有数据类型写入"><a href="#考虑接口泛用性，给MultiQueue套一层壳用来支持所有数据类型写入" class="headerlink" title="考虑接口泛用性，给MultiQueue套一层壳用来支持所有数据类型写入"></a>考虑接口泛用性，给MultiQueue套一层壳用来支持所有数据类型写入</h2><p>业务中要写入共享内存的数据不一定就是字节类型，需要引入Encoder</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> shmQueue <span class="keyword">interface</span> &#123;</span><br><span class="line">	Save(buf []<span class="type">byte</span>) <span class="type">error</span></span><br><span class="line">	Get() ([][]<span class="type">byte</span>, <span class="type">error</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> SHM <span class="keyword">struct</span> &#123;</span><br><span class="line">	shmQueue    shmQueue</span><br><span class="line">	constructor SHMConstructorFunc</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewConcurrentShmQueue</span><span class="params">(shm *common.Mem, size <span class="type">int</span>, constructorFunc SHMConstructorFunc)</span></span> (*SHM, <span class="type">error</span>) &#123;</span><br><span class="line">	shmQueue, err := queue.NewMultiQueue(shm, size)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;SHM&#123;</span><br><span class="line">		shmQueue:    shmQueue,</span><br><span class="line">		constructor: constructorFunc,</span><br><span class="line">	&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>读写也要做encoder泛用性封装</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(shm *SHM)</span></span> Save(i <span class="keyword">interface</span>&#123;&#125;) <span class="type">error</span> &#123;</span><br><span class="line">	buf := <span class="built_in">new</span>(bytes.Buffer)</span><br><span class="line">	enc := gob.NewEncoder(buf)</span><br><span class="line">	err := enc.Encode(i)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> shm.shmQueue.Save(buf.Bytes())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(shm *SHM)</span></span> Get() ([]<span class="keyword">interface</span>&#123;&#125;, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">var</span> ret []<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	data, err := shm.shmQueue.Get()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, v := <span class="keyword">range</span> data &#123;</span><br><span class="line">		tmp := shm.constructor()</span><br><span class="line">		err = gob.NewDecoder(bytes.NewBuffer(v)).Decode(tmp)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">		&#125;</span><br><span class="line">		ret = <span class="built_in">append</span>(ret, tmp)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> ret, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="初步性能测试以及小结"><a href="#初步性能测试以及小结" class="headerlink" title="初步性能测试以及小结"></a>初步性能测试以及小结</h2><p>具体涉及到block数据类型的相关实现和定义因为篇幅原因不在这里写入，由于demo编写时间短，还没有完全做好测试，这里给出一个简单的测试</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestOneReaderMultiWriter</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	mem, err := shm.NewMMap(<span class="string">&quot;./init_test.test&quot;</span>, (<span class="number">1</span>&lt;&lt;<span class="number">28</span>)+<span class="number">8</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Fatal(err.Error())</span><br><span class="line">	&#125;</span><br><span class="line">	s, err := NewConcurrentShmQueue(mem, <span class="number">1</span>&lt;&lt;<span class="number">28</span>, stringConstructor)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Fatal(err.Error())</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">1</span>)</span><br><span class="line">	<span class="keyword">go</span> readerRoutine(t, s, <span class="number">20</span>, &amp;wg)</span><br><span class="line">	<span class="keyword">for</span> producerCount := <span class="number">0</span>; producerCount &lt; <span class="number">40</span>; producerCount++ &#123;</span><br><span class="line">		uuidStr := uuid.New().String()</span><br><span class="line">		writerId := fmt.Sprintf(<span class="string">&quot;%2d-UUID-%s&quot;</span>, producerCount, uuidStr)</span><br><span class="line">		wg.Add(<span class="number">1</span>)</span><br><span class="line">		<span class="keyword">go</span> writerRoutine(writerId, s, <span class="number">20000</span>, &amp;wg)</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">readerRoutine</span><span class="params">(t *testing.T, s *SHM, cycle <span class="type">int</span>, wg *sync.WaitGroup)</span></span> &#123;</span><br><span class="line">	doneFlag := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; cycle; i++ &#123;</span><br><span class="line">		read(t, s)</span><br><span class="line">		<span class="keyword">if</span> !doneFlag &#123;</span><br><span class="line">			doneFlag = <span class="literal">true</span></span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;</span><br><span class="line">		time.Sleep(time.Second * <span class="number">10</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">writerRoutine</span><span class="params">(writerId <span class="type">string</span>, s *SHM, cycle <span class="type">int</span>, wg *sync.WaitGroup)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> r := <span class="built_in">recover</span>(); r != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Printf(<span class="string">&quot;Recovered in writer routine, ignore, %v\n&quot;</span>, r)</span><br><span class="line">		&#125;</span><br><span class="line">		wg.Done()</span><br><span class="line">	&#125;()</span><br><span class="line">	timeStr := time.Now().Format(<span class="string">&quot;2006-01-02 15:04:05&quot;</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// write</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; cycle; i++ &#123;</span><br><span class="line">		<span class="comment">// construct write string</span></span><br><span class="line">		writeStr := fmt.Sprintf(<span class="string">&quot;writerId=\&quot;%s\&quot;, currentTime=\&quot;%v\&quot;, cycle=%d, data=%s&quot;</span>,</span><br><span class="line">			writerId, timeStr, i+<span class="number">1</span>, <span class="string">&quot;concurrent write goroutine&quot;</span>)</span><br><span class="line">		<span class="comment">// 这里需要自旋</span></span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			err := s.Save(writeStr)</span><br><span class="line">			<span class="comment">// 如果是cas失败 自旋释放时间片</span></span><br><span class="line">			<span class="keyword">if</span> err == common.ErrFailedSwap &#123;</span><br><span class="line">				runtime.Gosched()</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> err == common.ErrOutOfCapacity &#123;</span><br><span class="line">				<span class="built_in">panic</span>(err)</span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="built_in">panic</span>(err)</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个测试中，我们生成了40个生产者，每个生产者写入20000个随机数据 1个消费者，生成了一个大小256MB的文件用来做mmap共享内存io</p>
+<p>这个测试不太严谨，只是简单测试了一下生产者速度，消费者因为太慢所以反而成为了瓶颈</p>
+<p>执行结果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">➜  shmMultiQueueDemo0 git:(dev) ✗ go test -v ./*.go -run TestOneReaderMultiWriter</span><br><span class="line">=== RUN   TestOneReaderMultiWriter</span><br><span class="line">reader start =================================================================</span><br><span class="line">...</span><br><span class="line">currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=30, data=concurrent write goroutine, type = *string</span><br><span class="line">value : 0xc0003ffa60, str: writerId=&quot; 7-UUID-c8471e69-1809-4458-975a-f464499a6b86&quot;, currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=31, data=concurrent write goroutine, type = *string</span><br><span class="line">value : 0xc0003ffa80, str: writerId=&quot;39-UUID-f9764d8b-f937-4c61-8aee-ff2db7b2a0da&quot;, currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=42, data=concurrent write goroutine, type = *string</span><br><span class="line">value : 0xc0003ffaa0, str: writerId=&quot; 7-UUID-c8471e69-1809-4458-975a-f464499a6b86&quot;, currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=32, data=concurrent write goroutine, type = *string</span><br><span class="line">value : 0xc0003ffac0, str: writerId=&quot;39-UUID-f9764d8b-f937-4c61-8aee-ff2db7b2a0da&quot;, currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=43, data=concurrent write goroutine, type = *string</span><br><span class="line">value : 0xc0003ffae0, str: writerId=&quot;39-UUID-f9764d8b-f937-4c61-8aee-ff2db7b2a0da&quot;, currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=44, data=concurrent write goroutine, type = *string</span><br><span class="line">value : 0xc0003ffb00, str: writerId=&quot; 7-UUID-c8471e69-1809-4458-975a-f464499a6b86&quot;, currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=33, data=concurrent write goroutine, type = *string</span><br><span class="line">value : 0xc0003ffb20, str: writerId=&quot;26-UUID-bf7a7b3f-962b-4a05-aeb3-79cfb54e6030&quot;, currentTime=&quot;2023-04-01 02:07:11&quot;, cycle=1, data=concurrent write goroutine, type = *string</span><br><span class="line">reader end =================================================================</span><br><span class="line">--- PASS: TestOneReaderMultiWriter (0.93s)</span><br><span class="line">PASS</span><br><span class="line">ok      command-line-arguments  3.103s</span><br></pre></td></tr></table></figure>
+
+<p>80万条数据用了0.93秒写入完成，大致的性能大概每秒钟86万条</p>
+<p>一般的场景中，这种级别的性能已经是足够的，实际的环境中主要的瓶颈在于消费者的消费速度，因为收集过来的数据要进行网络IO上传到云端，这个生产者的速度再快，消费者跟不上则没有太大的优化动力</p>
+<p>严格来说这个性能应该可以做到更好，因为用到了decoder还有接口封装，以及没有解决假共享性能瓶颈，在取模运算上也可以做一个二进制与的优化</p>
+<h1 id="下一步"><a href="#下一步" class="headerlink" title="下一步"></a>下一步</h1><ul>
+<li>假共享优化和实现</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/golang/" rel="tag"># golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/15/shm-lockfree-0/" rel="prev" title="基于共享内存实现的无锁队列 0 基本方案">
+      <i class="fa fa-chevron-left"></i> 基于共享内存实现的无锁队列 0 基本方案
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/24/shm-lockfree-2/" rel="next" title="基于共享内存实现的无锁队列 2 实现与Benchmark">
+      基于共享内存实现的无锁队列 2 实现与Benchmark <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E5%AE%9E%E7%8E%B0%E7%9A%84%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97-1-%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E5%9F%BA%E7%A1%80%E4%B8%8Egolang%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.</span> <span class="nav-text">基于共享内存实现的无锁队列 1 共享内存基础与golang实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.1.</span> <span class="nav-text">共享内存的基本介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SystemV-%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98"><span class="nav-number">1.2.</span> <span class="nav-text">SystemV 共享内存</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.2.1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%AD%A5%E9%AA%A4"><span class="nav-number">1.2.2.</span> <span class="nav-text">使用步骤</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MMAP%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98"><span class="nav-number">1.3.</span> <span class="nav-text">MMAP共享内存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E7%A7%8D%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%9A%84%E7%89%B9%E7%82%B9%E5%92%8C%E5%AE%9E%E9%99%85%E4%B8%8A%E7%9A%84%E9%80%89%E5%9E%8B"><span class="nav-number">1.4.</span> <span class="nav-text">两种共享内存的特点和实际上的选型</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#golang%E5%AE%9E%E7%8E%B0%E4%BB%A5%E5%8F%8A%E7%AE%80%E5%8D%95%E7%9A%84%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="nav-number">2.</span> <span class="nav-text">golang实现以及简单的性能测试</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E4%B8%B4%E7%95%8C%E5%8C%BA%E7%BB%93%E6%9E%84%E5%AE%9A%E4%B9%89"><span class="nav-number">2.1.</span> <span class="nav-text">共享内存临界区结构定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96mmap%E5%92%8CsystemV%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98"><span class="nav-number">2.2.</span> <span class="nav-text">初始化mmap和systemV共享内存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0demo"><span class="nav-number">2.3.</span> <span class="nav-text">环形队列简单实现demo</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%80%83%E8%99%91%E6%8E%A5%E5%8F%A3%E6%B3%9B%E7%94%A8%E6%80%A7%EF%BC%8C%E7%BB%99MultiQueue%E5%A5%97%E4%B8%80%E5%B1%82%E5%A3%B3%E7%94%A8%E6%9D%A5%E6%94%AF%E6%8C%81%E6%89%80%E6%9C%89%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%86%99%E5%85%A5"><span class="nav-number">2.4.</span> <span class="nav-text">考虑接口泛用性，给MultiQueue套一层壳用来支持所有数据类型写入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E6%AD%A5%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E4%BB%A5%E5%8F%8A%E5%B0%8F%E7%BB%93"><span class="nav-number">2.5.</span> <span class="nav-text">初步性能测试以及小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="nav-number">3.</span> <span class="nav-text">下一步</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Hall</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Hall</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

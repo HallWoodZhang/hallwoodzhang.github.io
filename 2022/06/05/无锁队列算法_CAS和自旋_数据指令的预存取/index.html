@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="先简单介绍一下什么是CAS指令和自旋CAS指令CAS：Compare and Swap(还有一种Compare and Set)，即比较再交换或者比较再设置，是一种有名的无锁算法。无锁编程，即不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步，所以也叫非阻塞同步（Non-blocking Synchronization）。 CAS算法涉及到三个操作数需要读写的内">
+<meta property="og:type" content="article">
+<meta property="og:title" content="无锁队列算法（2） CAS和自旋，以及数据&#x2F;指令预取">
+<meta property="og:url" content="http://yoursite.com/2022/06/05/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95_CAS%E5%92%8C%E8%87%AA%E6%97%8B_%E6%95%B0%E6%8D%AE%E6%8C%87%E4%BB%A4%E7%9A%84%E9%A2%84%E5%AD%98%E5%8F%96/index.html">
+<meta property="og:site_name" content="Hall">
+<meta property="og:description" content="先简单介绍一下什么是CAS指令和自旋CAS指令CAS：Compare and Swap(还有一种Compare and Set)，即比较再交换或者比较再设置，是一种有名的无锁算法。无锁编程，即不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步，所以也叫非阻塞同步（Non-blocking Synchronization）。 CAS算法涉及到三个操作数需要读写的内">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-06-05T03:04:45.000Z">
+<meta property="article:modified_time" content="2022-06-05T17:53:35.171Z">
+<meta property="article:author" content="Hall">
+<meta property="article:tag" content="algorithm">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2022/06/05/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95_CAS%E5%92%8C%E8%87%AA%E6%97%8B_%E6%95%B0%E6%8D%AE%E6%8C%87%E4%BB%A4%E7%9A%84%E9%A2%84%E5%AD%98%E5%8F%96/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>无锁队列算法（2） CAS和自旋，以及数据/指令预取 | Hall</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hall</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">其实是一个备忘录</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/06/05/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95_CAS%E5%92%8C%E8%87%AA%E6%97%8B_%E6%95%B0%E6%8D%AE%E6%8C%87%E4%BB%A4%E7%9A%84%E9%A2%84%E5%AD%98%E5%8F%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Hall">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hall">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          无锁队列算法（2） CAS和自旋，以及数据/指令预取
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-06-05 11:04:45" itemprop="dateCreated datePublished" datetime="2022-06-05T11:04:45+08:00">2022-06-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-06-06 01:53:35" itemprop="dateModified" datetime="2022-06-06T01:53:35+08:00">2022-06-06</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="先简单介绍一下什么是CAS指令和自旋"><a href="#先简单介绍一下什么是CAS指令和自旋" class="headerlink" title="先简单介绍一下什么是CAS指令和自旋"></a>先简单介绍一下什么是CAS指令和自旋</h1><h2 id="CAS指令"><a href="#CAS指令" class="headerlink" title="CAS指令"></a>CAS指令</h2><p>CAS：Compare and Swap(还有一种Compare and Set)，即比较再交换或者比较再设置，是一种有名的无锁算法。无锁编程，即不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步，所以也叫非阻塞同步（Non-blocking Synchronization）。</p>
+<p>CAS算法涉及到三个操作数需要读写的内存值 </p>
+<ul>
+<li>V进行比较的值</li>
+<li>A拟写入的新值</li>
+<li>B当且仅当 V 的值等于 A时，CAS通过原子方式用新值B来更新V的值，否则不会执行任何操作（比较和替换是一个原子操作）。</li>
+</ul>
+<p>CAS算法是乐观锁的一种实现方式，一般情况下是一个自旋操作，即不断的重试。自旋锁避免了进程上下文的调度开销，因此对于线程只会阻塞很短时间的场合是有效的。</p>
+<h2 id="自旋锁"><a href="#自旋锁" class="headerlink" title="自旋锁"></a>自旋锁</h2><p>自旋锁是指当一个线程在获取锁的时候，如果锁已经被其他线程获取，那么该线程将循环等待，然后不断地判断是否能够被成功获取，知直到获取到锁才会退出循环。</p>
+<p>获取锁的线程一直处于活跃状态，但是并没有执行任何有效的任务，使用这种锁会造成 busy-waiting 。</p>
+<p>它是为实现保护共享资源而提出的一种锁机制。其实，自旋锁与互斥锁比较类似，它们都是为了解决某项资源的互斥使用。无论是互斥锁，还是自旋锁，在任何时刻，最多只能由一个保持者，也就说，在任何时刻最多只能有一个执行单元获得锁。但是两者在调度机制上略有不同。对于互斥锁，如果资源已经被占用，资源申请者只能进入睡眠状态。但是自旋锁不会引起调用者睡眠，如果自旋锁已经被别的执行单元保持，调用者就一直循环在那里看是否该自旋锁的保持者已经释放了锁，“自旋”一词就是因此而得名。</p>
+<h2 id="golang实现自旋锁的一个简单例子"><a href="#golang实现自旋锁的一个简单例子" class="headerlink" title="golang实现自旋锁的一个简单例子"></a>golang实现自旋锁的一个简单例子</h2><p>关于自旋锁的实现这里只放出一个简单的例子，如果要实现可重入，公平等方面属性的锁，需要更多的实现技巧，如果有之后有时间再细说（又挖坑</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> SpinLock <span class="type">uint32</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *SpinLock)</span></span> Lock() &#123;</span><br><span class="line">    <span class="keyword">for</span> !atomic.CompareAndSwapUint32((*<span class="type">uint32</span>)(s), <span class="number">0</span>, <span class="number">1</span>) &#123;</span><br><span class="line">        runtime.Gosched()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *SpinLock)</span></span> Unlock() &#123;</span><br><span class="line">    atomic.StoreUint32((*<span class="type">uint32</span>)(s), <span class="number">0</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewSpinLock</span><span class="params">()</span></span> *sync.Locker &#123;</span><br><span class="line">    <span class="keyword">var</span> s SpinLock</span><br><span class="line">    <span class="keyword">return</span> &amp;s</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="自旋锁的其他变种"><a href="#自旋锁的其他变种" class="headerlink" title="自旋锁的其他变种"></a>自旋锁的其他变种</h2><ol>
+<li>TicketLock<br>TicketLock主要解决的是公平性的问题。<br>思路：每当有线程获取锁的时候，就给该线程分配一个递增的id，我们称之为排队号，同时，锁对应一个服务号，每当有线程释放锁，服务号就会递增，此时如果服务号与某个线程排队号一致，那么该线程就获得锁，由于排队号是递增的，所以就保证了最先请求获取锁的线程可以最先获取到锁，就实现了公平性。</li>
+</ol>
+<p>可以想象成银行办理业务排队，排队的每一个顾客都代表一个需要请求锁的线程，而银行服务窗口表示锁，每当有窗口服务完成就把自己的服务号加一，此时在排队的所有顾客中，只有自己的排队号与服务号一致的才可以得到服务。</p>
+<ol start="2">
+<li><p>CLHLock<br>CLH锁是一种基于链表的可扩展、高性能、公平的自旋锁，申请线程只在本地变量上自旋，它不断轮询前驱的状态，如果发现前驱释放了锁就结束自旋，获得锁。</p>
+</li>
+<li><p>MCSLock<br>MCSLock则是对本地变量的节点进行循环。</p>
+</li>
+<li><p>CLHLock 和 MCSLock<br>都是基于链表，不同的是CLHLock是基于隐式链表，没有真正的后续节点属性，MCSLock是显示链表，有一个指向后续节点的属性。<br>将获取锁的线程状态借助节点(node)保存,每个线程都有一份独立的节点，这样就解决了TicketLock多处理器缓存同步的问题。</p>
+</li>
+</ol>
+<h2 id="自旋锁和互斥锁"><a href="#自旋锁和互斥锁" class="headerlink" title="自旋锁和互斥锁"></a>自旋锁和互斥锁</h2><p>自旋锁与互斥锁都是为了实现保护资源共享的机制。<br>无论是自旋锁还是互斥锁，在任意时刻，都最多只能有一个保持者。<br>获取互斥锁的线程，如果锁已经被占用，则该线程将进入睡眠状态；获取自旋锁的线程则不会睡眠，而是一直循环等待锁释放。（说白了就是会一直轮训）</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>自旋锁：线程获取锁的时候，如果锁被其他线程持有，则当前线程将循环等待，直到获取到锁。</p>
+<p>自旋锁等待期间，线程的状态不会改变，线程一直是用户态并且是活动的(active)。</p>
+<p>自旋锁如果持有锁的时间太长，则会导致其它等待获取锁的线程耗尽CPU。</p>
+<p>自旋锁本身无法保证公平性，同时也无法保证可重入性。</p>
+<p>基于自旋锁，可以实现具备公平性和可重入性质的锁。</p>
+<p>TicketLock:采用类似银行排号叫好的方式实现自旋锁的公平性，但是由于不停的读取serviceNum，每次读写操作都必须在多个处理器缓存之间进行缓存同步，这会导致繁重的系统总线和内存的流量，大大降低系统整体的性能。</p>
+<p>CLHLock和MCSLock通过链表的方式避免了减少了处理器缓存同步，极大的提高了性能，区别在于CLHLock是通过轮询其前驱节点的状态，而MCS则是查看当前节点的锁状态。</p>
+<p>CLHLock在NUMA架构下使用会存在问题。在没有cache的NUMA系统架构中，由于CLHLock是在当前节点的前一个节点上自旋,NUMA架构中处理器访问本地内存的速度高于通过网络访问其他节点的内存，所以CLHLock在NUMA架构上不是最优的自旋锁。</p>
+<h1 id="无锁编程概要"><a href="#无锁编程概要" class="headerlink" title="无锁编程概要"></a>无锁编程概要</h1><p>高性能的无锁编程涉及到两个关键点，首先是CAS粒度缩小问题，再一是利用CPU的流水线预取，也就是一级和二级缓存 L1 和 L2。</p>
+<h2 id="锁粒度控制"><a href="#锁粒度控制" class="headerlink" title="锁粒度控制"></a>锁粒度控制</h2><p>缩小CAS粒度，主要在于利用 atomic.CompareAndSwapUint32 函数。这样的CPU机器指令能够在单条指令中完成数据的比较和更改且保证数据的一致性。这是已知的唯一的保证一致性前提下的最小代价的CAS。所以所有的有意义的无锁编程的核心之一，就是充分利用这一CPU支持来达到最小代价的锁，或者说，在CAS理论的领导下，不可能有不加锁而保证数据一致性的办法，只不过有了 atomic.CompareAndSwapUint32 函数（以及其它相关指令）的支持下，锁定的粒度被限制到了一条机器指令里，这就使得锁到代价被视为了零。</p>
+<p>对于 Windows API 来说，InterlockedIncrement() 及其相关原型基本等价于 atomic 的 CompareAndSwapUint32 等一系列原语。它们也对应着 Intel CPU 的 lock cmpxchg</p>
+<h2 id="预取机制"><a href="#预取机制" class="headerlink" title="预取机制"></a>预取机制</h2><p>CPU的流水线预取，这原本是 x86 系列CPU的特性（1982，1985），但在 ARM，MIPS 等架构中也被良好的支持，所以在多数情况下我们不考虑无预取机制不能带来性能提升的问题，转而考虑怎么才能真正正确地利用CPU预取特性。</p>
+<p>CPU预取实际上指的是两个方面，一是机器指令的预取，而是内存的相邻区域被自动预取到 L1 和 L2 的行为。</p>
+<h3 id="指令预取"><a href="#指令预取" class="headerlink" title="指令预取"></a>指令预取</h3><p>机器指令的预取会被跳转指令所打断，否则的话当前指令的后继数条指令将被自动地提取到执行机构的等待管线（Pipeline）中，因此当前指令执行完毕后，下一条指令无需内存和总线等待就会被立即执行。当然这是一个相当复杂的逻辑，尤其在多核情况下更是复杂。此外，最新的CPU已经能够较智能地识别跳转指令所带来的影响并正确地预取跳转目标位置的新指令，这仍然是有限的，不过通过更大的片上缓存（L2）也并非不能改善（分支预测）。由于高级语言的编译器优化等原因，程序员对于指令预取的操控力较为有限，因此在无锁编程中这个方面较少被考虑，但如果你在实现 C&#x2F;C++ 算法的话，这一块也需要被纳入性能化编程的考虑范围。</p>
+<h3 id="数据预取-x2F-内存预取"><a href="#数据预取-x2F-内存预取" class="headerlink" title="数据预取&#x2F;内存预取"></a>数据预取&#x2F;内存预取</h3><p>L1 Cache 和 L2 Cache 的预取特性，是指当 CPU 执行指令是如果正在访问内存位置 A，那么 A 地址之后的一块内存将会被自动装入L1缓存中，如果下一条指令没有操作这块内存的话，则 L1 中的内存块失效并被退化到 L2 中，如果命中的话则无需延迟直接被使用；如果当前指令是在修改 A 地址中的数据的话，则缓存完全失效，这块内存如果还要被继续使用的话将需要重新预取。但 atomic.CompareAndSwapUint32 函数可以算是例外，L1缓存并不需要因为被修改而失效。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/algorithm/" rel="tag"># algorithm</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/19/cv2-demo/" rel="prev" title="python 使用cv2 调用摄像头的有趣脚本">
+      <i class="fa fa-chevron-left"></i> python 使用cv2 调用摄像头的有趣脚本
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/06/05/%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%97%E6%B3%95_%E5%B9%B6%E5%8F%91%E5%92%8C%E5%A4%9A%E6%A0%B8%E7%BC%96%E7%A8%8B%E6%A6%82%E8%A6%81/" rel="next" title="无锁队列算法（3） 并发和多核编程概要">
+      无锁队列算法（3） 并发和多核编程概要 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%88%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D%E4%B8%80%E4%B8%8B%E4%BB%80%E4%B9%88%E6%98%AFCAS%E6%8C%87%E4%BB%A4%E5%92%8C%E8%87%AA%E6%97%8B"><span class="nav-number">1.</span> <span class="nav-text">先简单介绍一下什么是CAS指令和自旋</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CAS%E6%8C%87%E4%BB%A4"><span class="nav-number">1.1.</span> <span class="nav-text">CAS指令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E6%97%8B%E9%94%81"><span class="nav-number">1.2.</span> <span class="nav-text">自旋锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#golang%E5%AE%9E%E7%8E%B0%E8%87%AA%E6%97%8B%E9%94%81%E7%9A%84%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E4%BE%8B%E5%AD%90"><span class="nav-number">1.3.</span> <span class="nav-text">golang实现自旋锁的一个简单例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E6%97%8B%E9%94%81%E7%9A%84%E5%85%B6%E4%BB%96%E5%8F%98%E7%A7%8D"><span class="nav-number">1.4.</span> <span class="nav-text">自旋锁的其他变种</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E6%97%8B%E9%94%81%E5%92%8C%E4%BA%92%E6%96%A5%E9%94%81"><span class="nav-number">1.5.</span> <span class="nav-text">自旋锁和互斥锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.6.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%97%A0%E9%94%81%E7%BC%96%E7%A8%8B%E6%A6%82%E8%A6%81"><span class="nav-number">2.</span> <span class="nav-text">无锁编程概要</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%81%E7%B2%92%E5%BA%A6%E6%8E%A7%E5%88%B6"><span class="nav-number">2.1.</span> <span class="nav-text">锁粒度控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E5%8F%96%E6%9C%BA%E5%88%B6"><span class="nav-number">2.2.</span> <span class="nav-text">预取机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%87%E4%BB%A4%E9%A2%84%E5%8F%96"><span class="nav-number">2.2.1.</span> <span class="nav-text">指令预取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%A2%84%E5%8F%96-x2F-%E5%86%85%E5%AD%98%E9%A2%84%E5%8F%96"><span class="nav-number">2.2.2.</span> <span class="nav-text">数据预取&#x2F;内存预取</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Hall</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Hall</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
